@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>New capsule – Time Capsule</title>
+  <script src="js/theme.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;600&family=Newsreader:opsz,wght@6..72,500;6..72,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.html">Time Capsule</a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="dashboard.html">Your capsules</a>
+      <a href="create.html" aria-current="page">New capsule</a>
+      <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false">Night mode</button>
+    </nav>
+  </header>
+
+  <main class="page narrow">
+    <h1>New capsule</h1>
+    <p class="summary">Write a letter, add a song and choose when it opens. Until that day nobody can read it.</p>
+
+    <form id="capsule-form" novalidate>
+      <div class="field">
+        <label for="title">Title</label>
+        <input id="title" name="title" type="text" maxlength="100" autocomplete="off">
+        <p class="field-error" id="title-error" hidden></p>
+      </div>
+
+      <div class="field">
+        <label for="message">Letter</label>
+        <textarea id="message" name="message" maxlength="5000"></textarea>
+        <p class="field-hint" id="char-count">0 / 5000</p>
+        <p class="field-error" id="message-error" hidden></p>
+      </div>
+
+      <div class="field">
+        <label for="openAt">Opens on</label>
+        <input id="openAt" name="openAt" type="datetime-local">
+        <p class="field-hint">Your local time. Pick at least one minute from now.</p>
+        <p class="field-error" id="openAt-error" hidden></p>
+      </div>
+
+      <fieldset class="song-box">
+        <legend>Song (optional)</legend>
+
+        <div class="song-search">
+          <input id="song-query" type="search" placeholder="Song or artist" aria-label="Search for a song" autocomplete="off">
+          <button type="button" id="song-search-button" class="button button-secondary">Search</button>
+        </div>
+
+        <p id="song-status" class="search-status" aria-live="polite"></p>
+        <ul id="song-results" class="song-results"></ul>
+        <div id="selected-song" class="selected-song" aria-live="polite" hidden></div>
+      </fieldset>
+
+      <div class="form-actions">
+        <button type="submit" class="button">Seal capsule</button>
+      </div>
+    </form>
+
+    <section id="result" class="result" tabindex="-1" hidden></section>
+  </main>
+
+  <script src="js/create.js"></script>
+</body>
+</html>

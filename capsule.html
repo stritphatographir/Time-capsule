@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Capsule – Time Capsule</title>
+  <script src="js/theme.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;600&family=Newsreader:opsz,wght@6..72,500;6..72,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.html">Time Capsule</a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="dashboard.html">Your capsules</a>
+      <a href="create.html">New capsule</a>
+      <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false">Night mode</button>
+    </nav>
+  </header>
+
+  <main class="page narrow">
+    <a class="back-link" href="dashboard.html">Back to your capsules</a>
+
+    <!-- Sealed, ready and opened states are drawn here -->
+    <div id="stage" aria-live="polite"></div>
+
+    <!-- "On this day" from Wikipedia -->
+    <section id="history" class="history" hidden></section>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/capsule.js"></script>
+</body>
+</html>

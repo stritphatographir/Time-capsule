@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Time Capsule</title>
+  <script src="js/theme.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;600&family=Newsreader:opsz,wght@6..72,500;6..72,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.html" aria-current="page">Time Capsule</a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="dashboard.html">Your capsules</a>
+      <a href="create.html">New capsule</a>
+      <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false">Night mode</button>
+    </nav>
+  </header>
+
+  <main class="page">
+    <section class="hero">
+      <div>
+        <h1>Write to the person you’ll be next year.</h1>
+        <p class="hero-lead">Seal a letter and a song in a capsule. It stays locked until the day you choose.</p>
+        <div class="hero-actions">
+          <a class="button" href="create.html">Create a capsule</a>
+          <a class="button button-secondary" href="dashboard.html">Your capsules</a>
+        </div>
+      </div>
+
+      <div class="seal" aria-hidden="true">
+        <span class="seal-half seal-left"></span>
+        <span class="seal-half seal-right"></span>
+      </div>
+    </section>
+
+    <section class="glance" aria-label="Your capsules at a glance">
+      <p id="stats" class="glance-text" aria-live="polite">Loading your capsules…</p>
+    </section>
+
+    <section id="letter-section" aria-labelledby="letter-title" hidden>
+      <h2 id="letter-title" class="section-title">A letter from the past</h2>
+      <div id="letter" class="past-letter" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/home.js"></script>
+</body>
+</html>

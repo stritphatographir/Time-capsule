@@ -1,0 +1,36 @@
+[
+  {
+    "id": 1,
+    "title": "A letter to myself in one year",
+    "createdAt": "2026-10-30T09:00:00Z",
+    "openAt": "2027-10-30T12:00:00Z",
+    "recipientCount": 0,
+    "message": "Dear me,\nit is the end of October 2026. I am learning how to build websites, and today I made my very first capsule.\nI hope that by the time you read this, the project is finished and defended. Remember how nervous you were? Be kind to yourself.",
+    "song": { "title": "Here Comes the Sun", "artist": "The Beatles" }
+  },
+  {
+    "id": 2,
+    "title": "New Year wishes for the group",
+    "createdAt": "2026-10-12T18:30:00Z",
+    "openAt": "2026-12-31T21:00:00Z",
+    "recipientCount": 5,
+    "message": "Happy New Year, everyone!\nI wish all of us fewer deadlines, more sleep and projects that work on the first try."
+  },
+  {
+    "id": 3,
+    "title": "Before graduation",
+    "createdAt": "2026-09-20T08:15:00Z",
+    "openAt": "2027-06-01T10:00:00Z",
+    "recipientCount": 2,
+    "message": "By the time you read this, the exams are over.\nWrite down three things you are proud of from this year."
+  },
+  {
+    "id": 4,
+    "title": "First week of the course",
+    "createdAt": "2026-08-25T10:00:00Z",
+    "openAt": "2026-09-30T10:00:00Z",
+    "recipientCount": 0,
+    "message": "Hi, future me.\nToday I started the web programming course and I still don’t know how a server works. I hope that by the time you read this, you can build one.",
+    "song": { "title": "Dreams", "artist": "Fleetwood Mac" }
+  }
+]

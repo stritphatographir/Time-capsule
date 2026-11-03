@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Your capsules – Time Capsule</title>
+  <script src="js/theme.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;600&family=Newsreader:opsz,wght@6..72,500;6..72,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.html">Time Capsule</a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="dashboard.html" aria-current="page">Your capsules</a>
+      <a href="create.html">New capsule</a>
+      <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false">Night mode</button>
+    </nav>
+  </header>
+
+  <main class="page">
+    <h1>Your capsules</h1>
+    <p id="summary" class="summary"></p>
+
+    <div class="tabs" role="group" aria-label="Filter capsules">
+      <button class="tab" data-filter="all" aria-pressed="true">All</button>
+      <button class="tab" data-filter="sealed" aria-pressed="false">Sealed</button>
+      <button class="tab" data-filter="opened" aria-pressed="false">Opened</button>
+    </div>
+
+    <!-- Loading, error and empty messages appear here -->
+    <div id="status" class="status" aria-live="polite" hidden></div>
+
+    <section id="grid" class="grid" aria-label="Capsules"></section>
+  </main>
+<script src="js/api.js"></script>
+<script src="js/dashboard.js"></script>
+</body>
+</html>
