@@ -47,7 +47,11 @@ def get_status(record: dict[str, Any]) -> CapsuleStatus:
 
 
 def to_public(record: dict[str, Any]) -> dict[str, Any]:
-    """Build a capsule response and reveal its contents only after opening."""
+    """Server-side «lock» (similar to applyLock in api.js).
+
+    The letter and song are only returned after the seal is broken.
+    Before that, they cannot be retrieved with any request.
+    """
     status = get_status(record)
     view = {
         "id": record["id"],
@@ -60,7 +64,6 @@ def to_public(record: dict[str, Any]) -> dict[str, Any]:
     }
     if status == CapsuleStatus.opened:
         view["message"] = record["message"]
-        view["prediction"] = record.get("prediction")
         view["song"] = record["song"]
     return view
 
@@ -81,7 +84,6 @@ def create_capsule(payload: CapsuleCreate) -> dict[str, Any]:
         "id": capsule_id,
         "title": payload.title,
         "message": payload.message,
-        "prediction": payload.prediction,
         "created_at": utcnow(),
         "open_at": open_at,
         "opened_at": None,

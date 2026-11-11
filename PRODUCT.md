@@ -14,29 +14,28 @@ Specific age groups, occasions, and recipient access needs remain undecided.
 
 ## Product Purpose
 
-Let people write a letter for a chosen future date. The core journey is to compose a capsule, seal it, wait, and open it. An optional prediction captures what the writer thinks will be true by then, so it can be revisited alongside the letter.
+Let people write a letter for a chosen future date. The core journey is to compose a capsule, seal it, wait, and open it.
 
 ## Operating Context
 
-The current project is a local web prototype with a documented defense demo. The website has four pages.
+The current project is a local web prototype. The website has four pages.
 
-- `index.html` introduces Time Capsule and offers a 10-second example.
-- `create.html` takes a title, letter, opening date and time, and optional prediction.
-- `dashboard.html` lists capsules and shows each capsule’s opening time and status.
-- `capsule.html` shows the countdown and lets the reader break the seal when the capsule is ready. It then shows the letter and any prediction.
+- `index.html` introduces Time Capsule, summarizes the capsule list, and shows a letter from the past when available.
+- `create.html` takes a title, letter, opening date and time, and an optional song.
+- `dashboard.html` lists capsules and lets readers filter by status.
+- `capsule.html` shows the countdown and lets the reader break the seal when the capsule is ready. It also requests historical events for the opening date.
 
-The sample letter runs entirely in the browser. The defense demo then uses Swagger to show capsule creation and editing, recipient management, and scheduled opening. The README provides the local startup commands for the website and the API.
+The website runs separately from the FastAPI backend. Swagger documents capsule creation and editing, recipient management, and scheduled opening.
 
 ## Capabilities and Constraints
 
 ### Current implementation, verified from repository source
 
-- The static HTML, CSS, and JavaScript frontend uses the FastAPI backend in `Time-capsule backend/` to create, list, view, and open new capsules. The API uses a shared list without sign-in and clears its records on restart.
-- The form supports a title of up to 100 characters, a letter of up to 5,000 characters, and a prediction of up to 160 characters. It converts the selected local date and time to a timestamp for the API. The API’s default opening window starts one minute ahead and extends up to 50 years.
-- The API uses sealed, ready, and opened states. It refuses early opening and withholds the letter, prediction, and any song until someone explicitly breaks the seal after the scheduled time.
-- Older browser-saved capsules and original sample links are still readable. Their contents are stored in the browser or sample JSON, with the countdown enforced in the interface.
+- The static HTML, CSS, and JavaScript frontend uses browser storage for new capsules and bundled JSON for examples. The countdown controls what the interface reveals. The underlying browser storage contains the letters.
+- The form supports a title of up to 100 characters, a letter of up to 5,000 characters, and optional song metadata from iTunes. It converts the selected local date and time to a timestamp. The default opening window starts one minute ahead and extends up to 50 years.
+- The separate FastAPI backend uses sealed, ready, and opened states. It refuses early opening and withholds the letter and any song until someone explicitly breaks the seal after the scheduled time. API records are cleared on restart.
 - The API lets users edit sealed capsules and add or remove recipient records while a capsule is sealed. The website has no recipient entry or delivery workflow.
-- The current form offers a prediction field. Song metadata is still supported by the API and capsule reader. Photos have no attachment workflow.
+- Song metadata is supported by the API and capsule reader. Photos have no attachment workflow.
 
 ### Open decisions
 
@@ -52,10 +51,10 @@ The existing product name is **Time Capsule**. The English interface uses “cap
 
 ## Evidence on Hand
 
-- `README.md` documents local setup and the defense demo.
+- `README.md` describes the project concept.
 - The HTML pages and `js/` implement the website and the sample capsule.
 - `capsules.json` contains the original example letters.
-- `Time-capsule backend/app/` and `Time-capsule backend/tests/` show the capsule and recipient workflows, including when the API reveals a prediction.
+- `Time-capsule backend/app/` and `Time-capsule backend/tests/` show the capsule and recipient workflows, including when the API reveals capsule contents.
 
 ## Product Principles
 

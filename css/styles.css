@@ -83,6 +83,30 @@ h1 {
 
 .summary { margin: 0 0 1.5rem; color: var(--muted); }
 
+/* Filter tabs */
+.tabs {
+  display: flex;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.tab {
+  padding: 0.5rem 0;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.tab[aria-pressed="true"] {
+  color: var(--ink);
+  font-weight: 600;
+  border-bottom-color: var(--brass);
+}
+
 /* Loading, error, empty */
 .status {
   padding: 2rem 1rem;
@@ -110,7 +134,7 @@ h1 {
 /* Cards */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
   gap: 1.25rem;
 }
 
@@ -160,20 +184,62 @@ h1 {
 
 .card-meta { margin: 0; color: var(--muted); font-size: 0.95rem; }
 
+/* The countdown is the memorable element of the page */
+.countdown {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  margin: 0.25rem 0;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--brass);
+  border-bottom: 1px solid var(--brass);
+  text-align: center;
+}
+
+.countdown-value {
+  display: block;
+  font-family: var(--serif);
+  font-size: 2.1rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.countdown-unit { font-size: 0.85rem; color: var(--muted); }
+
+.opens-on { margin: 0; font-size: 0.95rem; }
+
+.letter {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 1.1rem;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .card-link { font-weight: 600; }
+
+@media (max-width: 480px) {
+  .countdown-value { font-size: 1.7rem; }
+}
 
 /* ---------- Create page ---------- */
 .page.narrow { max-width: 680px; }
 
 .field { margin-bottom: 1.5rem; }
 
-label {
+label,
+legend {
   display: block;
   margin-bottom: 0.35rem;
   font-weight: 600;
 }
 
 input[type="text"],
+input[type="search"],
 input[type="datetime-local"],
 textarea {
   width: 100%;
@@ -193,8 +259,26 @@ textarea {
   resize: vertical;
 }
 
+input[aria-invalid="true"],
+textarea[aria-invalid="true"] {
+  border: 2px solid var(--danger);
+}
+
 .field-hint { margin: 0.35rem 0 0; color: var(--muted); font-size: 0.9rem; }
 .field-error { margin: 0.35rem 0 0; color: var(--danger); font-size: 0.95rem; font-weight: 600; }
+
+.song-box {
+  margin: 0 0 1.5rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--card);
+}
+
+legend { padding: 0 0.35rem; }
+
+.song-search { display: flex; gap: 0.5rem; }
+.song-search input { flex: 1; min-width: 0; }
 
 .button-secondary {
   background: var(--card);
@@ -203,7 +287,68 @@ textarea {
 
 .button-secondary:hover { background: var(--bg); }
 
+.search-status { min-height: 1.5rem; margin: 0.75rem 0 0; color: var(--muted); }
+
+.song-results { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.5rem; }
+
+.song-option {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--card);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.song-option:hover { border-color: var(--brass); background: var(--sealed-bg); }
+
+.song-text { display: grid; }
+.song-name { margin: 0; font-weight: 600; }
+.song-artist { margin: 0; color: var(--muted); font-size: 0.95rem; }
+
+.selected-song {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border-left: 6px solid var(--brass);
+  background: var(--sealed-bg);
+}
+
+.selected-info { flex: 1; min-width: 200px; }
+.selected-info audio { width: 100%; margin-top: 0.5rem; }
+
 .form-actions { margin-top: 0.5rem; }
+
+.result {
+  margin-top: 2rem;
+  padding: 1.25rem;
+  border: 1px solid var(--line);
+  border-left: 6px solid var(--sage);
+  border-radius: 4px;
+  background: var(--card);
+}
+
+.result h2 { margin: 0 0 0.5rem; font-family: var(--serif); }
+
+.result-json {
+  overflow: auto;
+  margin: 0;
+  padding: 1rem;
+  border-radius: 4px;
+  background: var(--bg);
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
 
 /* ---------- Capsule page ---------- */
 .back-link { display: inline-block; margin-bottom: 1.25rem; }
@@ -227,36 +372,35 @@ textarea {
 
 .capsule-title:focus { outline: none; }
 
-.countdown {
-  display: grid;
+.capsule-card .countdown {
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
   margin: 1.5rem 0 0.75rem;
   padding-block: 1rem;
-  border-block: 1px solid var(--brass);
 }
 
-.countdown.has-long-days {
+.capsule-card .countdown.has-long-days {
   grid-template-columns: minmax(0, 1.65fr) repeat(3, minmax(0, 1fr));
 }
 
-.countdown-part {
+.capsule-card .countdown-part {
   display: grid;
   gap: 0.4rem;
-  text-align: center;
 }
 
-.countdown-part + .countdown-part { border-inline-start: 1px solid var(--line); }
+.capsule-card .countdown-part + .countdown-part { border-inline-start: 1px solid var(--line); }
+.capsule-card .countdown-value { font-size: clamp(1.625rem, 5vw, 3rem); }
+.capsule-card .countdown-unit { font-size: 0.875rem; line-height: 1.25; }
+.capsule-card .opens-on { color: var(--muted); }
 
-.countdown-value {
-  font-family: var(--serif);
-  font-size: clamp(1.625rem, 5vw, 3rem);
-  font-weight: 700;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
+@media (max-width: 420px) {
+  .capsule-card .countdown.has-long-days {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 1rem;
+  }
+
+  .capsule-card .countdown.has-long-days .countdown-part:nth-child(3) { border-inline-start: 0; }
 }
-
-.countdown-unit { color: var(--muted); font-size: 0.875rem; line-height: 1.25; }
-.opens-on { margin: 0; color: var(--muted); font-size: 0.95rem; }
 
 .ready-text {
   margin: 0.75rem 0 1.25rem;
@@ -321,20 +465,17 @@ textarea {
   line-height: 1.65;
 }
 
-.prediction {
-  margin-top: 1.5rem;
-  padding: 1rem calc(var(--letter-inset) + 1px) 0;
-  border-top: 1px solid var(--line);
-  overflow-wrap: anywhere;
+.letter-body p { margin: 0 0 1rem; }
+.letter-body p:last-child { margin-bottom: 0; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .reveal { animation: reveal 1.2s ease both; }
 }
 
-.prediction h2 {
-  margin: 0 0 0.35rem;
-  font-family: var(--serif);
-  font-size: 1.4rem;
+@keyframes reveal {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
 }
-
-.prediction p { margin: 0; font-size: 1.0625rem; line-height: 1.65; }
 
 .song-card {
   display: flex;
@@ -346,6 +487,35 @@ textarea {
   border-left: 6px solid var(--brass);
   background: var(--sealed-bg);
 }
+
+/* On this day */
+.history { margin-top: 2.5rem; }
+
+.history-title {
+  margin: 0 0 0.75rem;
+  font-family: var(--serif);
+  font-size: 1.6rem;
+}
+
+.history-list { margin: 0; padding: 0; list-style: none; }
+
+.history-item {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  gap: 1rem;
+  padding: 0.85rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.history-year {
+  font-family: var(--serif);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--brass);
+}
+
+.history-text { margin: 0 0 0.25rem; }
+.history-source { margin: 0.75rem 0 0; color: var(--muted); font-size: 0.9rem; }
 
 /* ---------- Night theme ---------- */
 :root[data-theme="dark"] {
@@ -413,23 +583,34 @@ textarea {
 .hero .seal { width: 160px; height: 160px; margin: 0 auto; }
 .hero .seal-half { font-size: 4.4rem; transition: none; }
 
-.dashboard h1 { margin-bottom: 1.25rem; }
-
-.card-title, .capsule-title, .letter-body, .song-card { overflow-wrap: anywhere; }
-
-.letter-body { white-space: pre-wrap; }
-
-.song-card audio { max-width: 100%; }
-
-.button:disabled { opacity: 0.7; cursor: wait; }
-
-@media (max-width: 420px) {
-  .site-nav { flex-wrap: wrap; gap: 0.5rem 0.85rem; }
-
-  .countdown.has-long-days {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    row-gap: 1rem;
-  }
-
-  .countdown.has-long-days .countdown-part:nth-child(3) { border-inline-start: 0; }
+.glance {
+  margin: 1rem 0 2.5rem;
+  padding: 1.25rem 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
 }
+
+.glance-text {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: clamp(1.25rem, 3vw, 1.6rem);
+  line-height: 1.4;
+}
+
+.section-title { margin: 0 0 0.75rem; font-family: var(--serif); font-size: 1.6rem; }
+
+.past-letter {
+  padding: 1.5rem;
+  border-left: 6px solid var(--brass);
+  background: var(--sealed-bg);
+}
+
+.letter-quote {
+  max-width: 52ch;
+  margin: 0 0 1rem;
+  font-family: var(--serif);
+  font-size: 1.4rem;
+  line-height: 1.5;
+}
+
+.letter-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem; }

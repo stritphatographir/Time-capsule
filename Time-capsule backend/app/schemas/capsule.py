@@ -1,13 +1,9 @@
 from datetime import datetime
 from enum import Enum
-from typing import Annotated
 
 from pydantic import ConfigDict, Field, model_validator
 
 from app.schemas.base import CamelModel
-
-
-Prediction = Annotated[str, Field(min_length=1, max_length=160)]
 
 
 class CapsuleStatus(str, Enum):
@@ -27,7 +23,6 @@ class CapsuleCreate(CamelModel):
     title: str = Field(min_length=1, max_length=100)
     message: str = Field(min_length=1, max_length=5000)
     open_at: datetime
-    prediction: Prediction | None = None
     song: Song | None = None
 
     model_config = ConfigDict(
@@ -48,7 +43,6 @@ class CapsuleUpdate(CamelModel):
     title: str | None = Field(default=None, min_length=1, max_length=100)
     message: str | None = Field(default=None, min_length=1, max_length=5000)
     open_at: datetime | None = None
-    prediction: Prediction | None = None  # Explicit null removes the prediction
     song: Song | None = None  # Explicit null removes the song
 
     @model_validator(mode="after")
@@ -69,7 +63,6 @@ class CapsuleOut(CamelModel):
     opened_at: datetime | None = None
     status: CapsuleStatus
     recipient_count: int
-    # Contents are only available after the seal is broken.
+    # The server returns message and song only when the seal is broken (status = opened)
     message: str | None = None
-    prediction: str | None = None
     song: Song | None = None
