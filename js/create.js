@@ -13,10 +13,9 @@ const songResults = document.getElementById("song-results");
 const selectedBox = document.getElementById("selected-song");
 
 const resultBox = document.getElementById("result");
+const submitButton = form.querySelector('button[type="submit"]');
 
 const MAX_MESSAGE = 5000;
-const ONE_MINUTE = 60 * 1000;
-const FIFTY_YEARS = 50 * 365 * 24 * 60 * 60 * 1000;
 
 let selectedSong = null; // выбранная песня или null
 let searchCounter = 0;   // нужен, чтобы игнорировать устаревшие ответы
@@ -36,7 +35,7 @@ function toLocalInputValue(date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-openAtInput.min = toLocalInputValue(new Date(Date.now() + ONE_MINUTE));
+openAtInput.min = toLocalInputValue(new Date());
 
 messageInput.addEventListener("input", () => {
   charCount.textContent = `${messageInput.value.length} / ${MAX_MESSAGE}`;
@@ -59,21 +58,15 @@ function validate() {
     errors.message = `The letter is too long. The limit is ${MAX_MESSAGE} characters.`;
   }
 
-  if (!openAtInput.value) {
+  if (!openAtInput.value || !Number.isFinite(Date.parse(openAtInput.value))) {
     errors.openAt = "Choose when the capsule opens.";
-  } else {
-    const openTime = new Date(openAtInput.value).getTime();
-    if (openTime < Date.now() + ONE_MINUTE) {
-      errors.openAt = "The opening date must be at least one minute from now.";
-    } else if (openTime > Date.now() + FIFTY_YEARS) {
-      errors.openAt = "Choose a date within the next 50 years.";
-    }
   }
 
   return errors;
 }
 
 function showErrors(errors) {
+  let firstInvalid;
   ["title", "message", "openAt"].forEach((name) => {
     const input = document.getElementById(name);
     const box = document.getElementById(`${name}-error`);
@@ -83,12 +76,15 @@ function showErrors(errors) {
       box.hidden = false;
       input.setAttribute("aria-invalid", "true");
       input.setAttribute("aria-describedby", box.id);
+      firstInvalid ??= input;
     } else {
       box.hidden = true;
       input.removeAttribute("aria-invalid");
       input.removeAttribute("aria-describedby");
     }
   });
+  firstInvalid?.focus();
+  return Boolean(firstInvalid);
 }
 
 // ---------- Song search (fetch + async/await) ----------
@@ -99,36 +95,29 @@ function setSongStatus(text) {
 
 async function searchSongs() {
   const term = songQuery.value.trim();
+  const myId = ++searchCounter;
+  songResults.replaceChildren();
   if (!term) {
     setSongStatus("Type a song or an artist first.");
     return;
   }
 
-  const myId = ++searchCounter;
-  songResults.replaceChildren();
   setSongStatus("Searching…");
 
   try {
-    const params = new URLSearchParams({ term, media: "music", entity: "song", limit: "8" });
-    const response = await fetch(`https://itunes.apple.com/search?${params}`);
-
-    if (!response.ok) {
-      throw new Error(`iTunes answered with status ${response.status}.`);
-    }
-
-    const data = await response.json();
+    const songs = await searchSongsOnServer(term);
     if (myId !== searchCounter) return; // пришёл старый ответ, игнорируем
 
-    if (data.results.length === 0) {
+    if (songs.length === 0) {
       setSongStatus(`No songs found for “${term}”. Try another spelling.`);
       return;
     }
 
     setSongStatus("");
-    data.results.forEach((song) => songResults.append(buildResult(song)));
+    songs.forEach((song) => songResults.append(buildResult(song)));
   } catch (error) {
     if (myId !== searchCounter) return;
-    setSongStatus(`Couldn’t search iTunes. ${error.message} Check your connection and try again.`);
+    setSongStatus(`Couldn’t search for songs. ${error.message}`);
   }
 }
 
@@ -137,28 +126,26 @@ function buildResult(song) {
   const button = el("button", "song-option");
   button.type = "button";
 
-  const art = el("img");
-  art.src = song.artworkUrl60;
-  art.alt = "";
-  art.width = 48;
-  art.height = 48;
+  if (song.artwork) {
+    const art = el("img");
+    art.src = song.artwork;
+    art.alt = "";
+    art.width = 48;
+    art.height = 48;
+    button.append(art);
+  }
 
   const text = el("span", "song-text");
-  text.append(el("span", "song-name", song.trackName), el("span", "song-artist", song.artistName));
+  text.append(el("span", "song-name", song.title), el("span", "song-artist", song.artist));
 
-  button.append(art, text);
+  button.append(text);
   button.addEventListener("click", () => chooseSong(song));
   item.append(button);
   return item;
 }
 
 function chooseSong(song) {
-  selectedSong = {
-    title: song.trackName,
-    artist: song.artistName,
-    previewUrl: song.previewUrl,
-    artwork: song.artworkUrl100,
-  };
+  selectedSong = song;
 
   songResults.replaceChildren();
   setSongStatus("");
@@ -170,19 +157,26 @@ function renderSelectedSong() {
   selectedBox.hidden = selectedSong === null;
   if (!selectedSong) return;
 
-  const art = el("img");
-  art.src = selectedSong.artwork;
-  art.alt = "";
-  art.width = 64;
-  art.height = 64;
+  if (selectedSong.artwork) {
+    const art = el("img");
+    art.src = selectedSong.artwork;
+    art.alt = "";
+    art.width = 64;
+    art.height = 64;
+    selectedBox.append(art);
+  }
 
   const info = el("div", "selected-info");
   info.append(el("p", "song-name", selectedSong.title), el("p", "song-artist", selectedSong.artist));
 
-  const audio = el("audio");
-  audio.controls = true;
-  audio.src = selectedSong.previewUrl;
-  info.append(audio);
+  if (selectedSong.previewUrl) {
+    const audio = el("audio");
+    audio.controls = true;
+    audio.src = selectedSong.previewUrl;
+    info.append(audio);
+  } else {
+    info.append(el("p", "field-hint", "This song has no audio preview."));
+  }
 
   const remove = el("button", "button button-secondary", "Remove song");
   remove.type = "button";
@@ -191,7 +185,7 @@ function renderSelectedSong() {
     renderSelectedSong();
   });
 
-  selectedBox.append(art, info, remove);
+  selectedBox.append(info, remove);
 }
 
 songSearchButton.addEventListener("click", searchSongs);
@@ -206,54 +200,51 @@ songQuery.addEventListener("keydown", (event) => {
 
 // ---------- Submit ----------
 
-function showResult(capsule) {
-  resultBox.replaceChildren();
-
-  const heading = el("h2", "", "Capsule ready");
-  const note = el(
-    "p",
-    "",
-    "There is no server yet, so nothing is saved. Later this data will be sent to the API. For now, here it is as JSON."
-  );
-  const json = el("pre", "result-json", JSON.stringify(capsule, null, 2));
-
-  resultBox.append(heading, note, json);
-  resultBox.hidden = false;
-  resultBox.focus();
-  resultBox.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
-form.addEventListener("submit", (event) => {
-  event.preventDefault();
-
-  const errors = validate();
-  showErrors(errors);
-
-  const firstInvalid = ["title", "message", "openAt"].find((name) => errors[name]);
-  if (firstInvalid) {
-    document.getElementById(firstInvalid).focus();
-    resultBox.hidden = true;
-    return;
+function showSaveError(error) {
+  const errors = {};
+  const otherErrors = [];
+  for (const { field, message } of error.fields || []) {
+    const name = field.replace(/^body\./, "");
+    if (["title", "message", "openAt"].includes(name)) errors[name] = message;
+    else otherErrors.push(message);
   }
+  if (error.code === "invalid_open_date") errors.openAt = error.message;
 
-  const capsule = {
-  id: Date.now(),
-  title: titleInput.value.trim(),
-  message: messageInput.value.trim(),
-  createdAt: new Date().toISOString(),
-  openAt: new Date(openAtInput.value).toISOString(),
-  recipientCount: 0,
-  song: selectedSong,
-};
-
-try {
-  const saved = JSON.parse(localStorage.getItem("capsules") || "[]");
-  saved.push(capsule);
-  localStorage.setItem("capsules", JSON.stringify(saved));
-} catch (error) {
-  console.error("Could not save capsule:", error);
-  return;
+  const focusedField = showErrors(errors);
+  if (focusedField && otherErrors.length === 0) return;
+  resultBox.textContent = otherErrors.join(" ") || error.message;
+  if (error.status === 403 && error.code !== "capsule_locked") {
+    resultBox.textContent = "The server refused the save request (403).";
+    const localForm = new URL("create.html", LOCAL_APP_URL);
+    if (window.location.origin !== localForm.origin) {
+      const link = el("a", "", "Open the local create page");
+      link.href = localForm.href;
+      link.target = "_blank";
+      link.rel = "noopener";
+      resultBox.append(" ", link, ".");
+    }
+  }
+  resultBox.hidden = false;
+  if (!focusedField) resultBox.focus();
 }
 
-window.location.href = "dashboard.html";
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (submitButton.disabled) return;
+  resultBox.hidden = true;
+  if (showErrors(validate())) return;
+
+  submitButton.disabled = true;
+  try {
+    await createCapsule({
+      title: titleInput.value.trim(),
+      message: messageInput.value.trim(),
+      openAt: new Date(openAtInput.value).toISOString(),
+      song: selectedSong,
+    });
+    window.location.href = "dashboard.html";
+  } catch (error) {
+    showSaveError(error);
+    submitButton.disabled = false;
+  }
 });

@@ -10,9 +10,11 @@ const historyBox = document.getElementById("history");
 const params = new URLSearchParams(window.location.search);
 const capsuleId = params.get("id");
 
-// ?demo=20 двигает дату открытия на 20 секунд вперёд (удобно показывать на защите)
+// The demo parameter adjusts a bundled example only. The API controls saved capsules.
 const demoSeconds = Number(params.get("demo")) || 0;
-const demoOpenAt = demoSeconds > 0 ? new Date(Date.now() + demoSeconds * 1000).toISOString() : null;
+const demoOpenAt = demoSeconds > 0 && demoSeconds <= 3600
+  ? new Date(Date.now() + demoSeconds * 1000).toISOString()
+  : null;
 
 let capsule = null;
 let timerId = null;
@@ -54,11 +56,11 @@ function recipientsText(count) {
   return count === 1 ? "Shared with 1 person" : `Shared with ${count} people`;
 }
 
-// Запоминаем в браузере, что печать уже сломана (позже это будет хранить сервер)
+// Only older browser saves and examples need a browser-side seal marker.
 const brokenKey = () => `capsule-broken:${capsuleId}`;
 
 function wasBroken() {
-  if (demoOpenAt) return false; // в демо-режиме всегда показываем ритуал
+  if (capsule.demo) return false;
   try {
     return localStorage.getItem(brokenKey()) === "1";
   } catch {
@@ -152,7 +154,7 @@ async function tick() {
 
   if (updateCountdown(wrap) <= 0) {
     clearInterval(timerId);
-    await loadCapsule(true); // время вышло: просим данные заново, теперь они придут с письмом
+    await loadCapsule(true);
   }
 }
 
@@ -165,7 +167,12 @@ function buildTitle() {
 }
 
 function metaText() {
-  return `${recipientsText(capsule.recipientCount)}. Written on ${formatDate(capsule.createdAt)}.`;
+  const count = capsule.recipientCount;
+  let recipients = recipientsText(count);
+  if (isApiCapsuleId(capsuleId)) {
+    recipients = count === 0 ? "No recipients added" : `${count} recipient${count === 1 ? "" : "s"}`;
+  }
+  return `${recipients}. Written on ${formatDate(capsule.createdAt)}.`;
 }
 
 function renderSealed() {
@@ -174,12 +181,14 @@ function renderSealed() {
   card.append(buildCountdown(capsule.openAt));
   card.append(el("p", "opens-on", `Opens on ${formatDateTime(capsule.openAt)}`));
 
-  if (demoOpenAt) {
+  if (capsule.demo) {
     card.append(el("p", "demo-note", `Demo mode: the opening date was moved to ${demoSeconds} seconds from page load.`));
   }
 
   stage.append(card);
-  timerId = setInterval(tick, 1000);
+  // The server may still report sealed if the browser clock is ahead.
+  const pastLocalDeadline = Date.parse(capsule.openAt) <= Date.now();
+  timerId = setInterval(tick, pastLocalDeadline ? 5000 : 1000);
 }
 
 function renderReady() {
@@ -189,14 +198,31 @@ function renderReady() {
 
   const button = el("button", "button capsule-open-button", "Break the seal");
   button.type = "button";
-  button.addEventListener("click", () => breakSeal(card, button));
-  card.append(button);
+  const error = el("p", "field-error");
+  error.setAttribute("role", "alert");
+  error.hidden = true;
+  button.addEventListener("click", () => breakSeal(card, button, error));
+  card.append(button, error);
 
   stage.append(card);
 }
 
-function breakSeal(card, button) {
-  markBroken();
+async function breakSeal(card, button, errorBox) {
+  button.disabled = true;
+  errorBox.hidden = true;
+
+  if (isApiCapsuleId(capsuleId)) {
+    try {
+      capsule = await openCapsule(capsuleId);
+    } catch (error) {
+      errorBox.textContent = error.message;
+      errorBox.hidden = false;
+      button.disabled = false;
+      return;
+    }
+  } else if (!capsule.demo) {
+    markBroken();
+  }
 
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (reduceMotion) {
@@ -204,7 +230,6 @@ function breakSeal(card, button) {
     return;
   }
 
-  button.disabled = true;
   card.querySelector(".seal").classList.add("breaking");
   setTimeout(() => renderOpened(true), 1000);
 }
@@ -268,9 +293,10 @@ function render() {
   clearInterval(timerId);
   stage.replaceChildren();
 
-  if (!isOpen(capsule)) {
+  const status = capsule.status || (!isOpen(capsule) ? "sealed" : wasBroken() ? "opened" : "ready");
+  if (status === "sealed") {
     renderSealed();
-  } else if (!wasBroken()) {
+  } else if (status === "ready") {
     renderReady();
   } else {
     renderOpened(false);
@@ -319,7 +345,10 @@ async function loadHistory() {
   const day = String(date.getDate()).padStart(2, "0");
   const key = `${month}-${day}`;
 
-  if (historyLoadedFor === key) return; // уже загружено или загружается
+  if (historyLoadedFor === key) {
+    historyBox.hidden = false;
+    return;
+  }
   historyLoadedFor = key;
 
   const dayLabel = date.toLocaleDateString("en-GB", { day: "numeric", month: "long" });

@@ -28,6 +28,8 @@ def test_create_capsule_hides_letter(client):
     assert data["recipientCount"] == 0
     assert "message" not in data or data["message"] is None
     assert data.get("song") is None
+    assert response.headers["Location"] == f"/capsules/{data['id']}"
+    assert response.headers["Cache-Control"] == "no-store"
 
 
 def test_create_invalid_body_returns_422(client):
@@ -49,6 +51,7 @@ def test_get_missing_capsule_returns_404(client):
     response = client.get("/capsules/999")
     assert response.status_code == 404
     assert response.json()["error"]["code"] == "capsule_not_found"
+    assert response.headers["Cache-Control"] == "no-store"
 
 
 def test_get_with_bad_id_returns_422(client):
@@ -123,6 +126,7 @@ def test_open_reveals_letter_and_song_then_conflicts(client, monkeypatch):
 
     opened = client.post("/capsules/1/open")
     assert opened.status_code == 200
+    assert opened.headers["Cache-Control"] == "no-store"
     data = opened.json()
     assert data["status"] == "opened"
     assert data["message"] == "Secret text"

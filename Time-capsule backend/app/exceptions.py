@@ -54,3 +54,8 @@ class DuplicateRecipientError(AppError):
 class RecipientLimitError(AppError):
     status_code = 409
     code = "recipient_limit_reached"
+
+
+class MusicSearchUnavailableError(AppError):
+    status_code = 502
+    code = "music_search_unavailable"

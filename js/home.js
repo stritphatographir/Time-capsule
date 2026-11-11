@@ -16,7 +16,9 @@ function el(tag, className, text) {
   return node;
 }
 
-const isOpen = (c) => new Date(c.openAt).getTime() <= Date.now();
+function capsuleState(capsule) {
+  return capsule.status ?? (Date.parse(capsule.openAt) <= Date.now() ? "opened" : "sealed");
+}
 
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
@@ -57,11 +59,20 @@ function renderStats() {
   }
 
   const sealed = capsules
-    .filter((c) => !isOpen(c))
+    .filter((capsule) => capsuleState(capsule) === "sealed")
     .sort((a, b) => new Date(a.openAt) - new Date(b.openAt));
-  const opened = capsules.filter(isOpen);
+  const ready = capsules.filter((capsule) => capsuleState(capsule) === "ready");
+  const opened = capsules.filter((capsule) => capsuleState(capsule) === "opened");
 
-  statsBox.append(`You have ${plural(sealed.length, "sealed capsule")} and ${opened.length} opened. `);
+  const readySummary = ready.length ? `, ${ready.length} ready to open,` : "";
+  statsBox.append(`You have ${plural(sealed.length, "sealed capsule")}${readySummary} and ${opened.length} opened. `);
+
+  if (ready.length > 0) {
+    const link = el("a", "", `“${ready[0].title}”`);
+    link.href = capsuleLink(ready[0].id);
+    statsBox.append("Ready to open ", link, ".");
+    return;
+  }
 
   if (sealed.length === 0) {
     statsBox.append("Everything is open. Time to write a new one.");
@@ -77,7 +88,7 @@ function renderStats() {
 // ---------- Letter from the past ----------
 
 function pickLetter() {
-  const pool = capsules.filter((c) => isOpen(c) && c.message);
+  const pool = capsules.filter((capsule) => capsuleState(capsule) === "opened" && capsule.message);
   const choices = pool.length > 1 ? pool.filter((c) => c.id !== lastLetterId) : pool;
   const letter = choices[Math.floor(Math.random() * choices.length)];
   return { letter, count: pool.length };
@@ -90,8 +101,13 @@ function renderLetter(focusButton = false) {
   const { letter, count } = pickLetter();
 
   if (!letter) {
+    if (capsules.some((capsule) => capsuleState(capsule) === "ready")) {
+      letterBox.append(el("p", "letter-quote", "Break the seal on a ready capsule to read its letter."));
+      return;
+    }
+
     const next = capsules
-      .filter((c) => !isOpen(c))
+      .filter((capsule) => capsuleState(capsule) === "sealed")
       .sort((a, b) => new Date(a.openAt) - new Date(b.openAt))[0];
 
     letterBox.append(

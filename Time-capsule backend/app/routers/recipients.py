@@ -7,7 +7,11 @@ from app.schemas.errors import ErrorResponse
 from app.schemas.recipient import RecipientCreate, RecipientOut
 from app.services import recipient_service
 
-router = APIRouter(prefix="/capsules/{capsule_id}/recipients", tags=["Recipients"])
+router = APIRouter(
+    prefix="/capsules/{capsule_id}/recipients",
+    tags=["Recipients"],
+    responses={422: {"model": ErrorResponse, "description": "Request validation failed"}},
+)
 
 CapsuleId = Annotated[int, Path(ge=1, description="Capsule id")]
 RecipientId = Annotated[int, Path(ge=1, description="Recipient id")]

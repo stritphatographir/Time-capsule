@@ -22,7 +22,7 @@
 
   <main class="page narrow">
     <h1>New capsule</h1>
-    <p class="summary">Write a letter, add a song and choose when it opens. Until that day nobody can read it.</p>
+    <p class="summary">Write a letter, add a song and choose when it opens. Break the seal when the time comes.</p>
 
     <form id="capsule-form" novalidate>
       <div class="field">
@@ -63,9 +63,10 @@
       </div>
     </form>
 
-    <section id="result" class="result" tabindex="-1" hidden></section>
+    <p id="result" class="field-error" role="alert" tabindex="-1" hidden></p>
   </main>
 
+  <script src="js/api.js"></script>
   <script src="js/create.js"></script>
 </body>
 </html>

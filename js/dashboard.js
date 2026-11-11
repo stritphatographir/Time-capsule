@@ -8,9 +8,12 @@ const tabs = document.querySelectorAll(".tab");
 let capsules = [];
 let currentFilter = "all"; // "all" | "sealed" | "opened"
 let timerId = null;
+let loading = false;
+let nextRefreshAt = 0;
 
-// Капсула открыта, если дата открытия уже прошла
-const isOpen = (capsule) => new Date(capsule.openAt).getTime() <= Date.now();
+function capsuleState(capsule) {
+  return capsule.status ?? (Date.parse(capsule.openAt) <= Date.now() ? "opened" : "sealed");
+}
 
 // Создаёт элемент. Текст ставим через textContent, а не innerHTML (безопасно).
 function el(tag, className, text) {
@@ -56,6 +59,10 @@ function showStatus(kind, message) {
   }
 
   if (kind === "empty") {
+    if (capsules.length > 0) {
+      statusBox.append(el("p", "status-text", `No ${currentFilter} capsules.`));
+      return;
+    }
     statusBox.append(el("p", "status-text", "Nothing here yet. Write a letter to your future self."));
     const link = el("a", "button", "Create a capsule");
     link.href = "create.html";
@@ -65,9 +72,9 @@ function showStatus(kind, message) {
 
 // ---------- Countdown ----------
 
-function buildCountdown(openAt) {
+function buildCountdown(capsule) {
   const wrap = el("div", "countdown");
-  wrap.dataset.openAt = openAt;
+  wrap.dataset.openAt = capsule.openAt;
   wrap.setAttribute("role", "timer");
 
   ["days", "hours", "minutes", "seconds"].forEach((unit) => {
@@ -96,63 +103,76 @@ function updateCountdown(wrap) {
 }
 
 function tick() {
-  let someCapsuleOpened = false;
+  if (loading) return;
+  let shouldRefresh = false;
 
-  document.querySelectorAll(".countdown").forEach((wrap) => {
-    if (updateCountdown(wrap) <= 0) someCapsuleOpened = true;
+  grid.querySelectorAll(".countdown").forEach((wrap) => {
+    if (updateCountdown(wrap) <= 0) shouldRefresh = true;
   });
 
-  // Когда время вышло, просим данные заново (позже это сделает сервер)
-  if (someCapsuleOpened) loadCapsules(true);
+  // The browser clock can reach zero before the server considers a capsule ready.
+  const now = performance.now();
+  if (shouldRefresh && now >= nextRefreshAt) {
+    nextRefreshAt = now + 5000;
+    loadCapsules(true);
+  }
 }
 
 // ---------- Cards ----------
 
-function recipientsText(count) {
+function recipientsText(capsule) {
+  const count = capsule.recipientCount;
+  if (isApiCapsuleId(capsule.id)) {
+    if (count === 0) return "No recipients added";
+    return count === 1 ? "1 recipient" : `${count} recipients`;
+  }
   if (count === 0) return "Only for you";
   return count === 1 ? "Shared with 1 person" : `Shared with ${count} people`;
 }
 
 function buildCard(capsule) {
-  const open = isOpen(capsule);
-  const card = el("article", open ? "card card-open" : "card card-sealed");
+  const state = capsuleState(capsule);
+  const card = el("article", state === "sealed" ? "card card-sealed" : "card card-open");
+  const labels = { sealed: "Sealed", ready: "Ready", opened: "Opened" };
 
   const head = el("div", "card-head");
   head.append(
     el("h2", "card-title", capsule.title),
-    el("span", "badge", open ? "Opened" : "Sealed")
+    el("span", "badge", labels[state])
   );
   card.append(head);
 
   card.append(
-    el("p", "card-meta", `${recipientsText(capsule.recipientCount)}. Created ${formatDate(capsule.createdAt)}.`)
+    el("p", "card-meta", `${recipientsText(capsule)}. Created ${formatDate(capsule.createdAt)}.`)
   );
 
-  if (open) {
-    // Если сервер прислал письмо, показываем начало. Иначе просто отмечаем, что капсула открыта.
+  let linkText;
+  if (state === "opened") {
     card.append(el("p", "letter", capsule.message || "This capsule is open."));
-    const link = el("a", "card-link", "Read the letter");
-    link.href = `capsule.html?id=${encodeURIComponent(capsule.id)}`;
-    card.append(link);
+    linkText = "Read the letter";
+  } else if (state === "ready") {
+    linkText = "Break the seal";
   } else {
-    // Закрытая капсула: только таймер и дата, содержимого нет
-    card.append(buildCountdown(capsule.openAt));
+    card.append(buildCountdown(capsule));
     card.append(el("p", "opens-on", `Opens on ${formatDate(capsule.openAt)}`));
-    const link = el("a", "card-link", "View capsule");
-    link.href = `capsule.html?id=${encodeURIComponent(capsule.id)}`;
-    card.append(link);
+    linkText = "View capsule";
   }
 
+  const link = el("a", "card-link", linkText);
+  link.href = `capsule.html?id=${encodeURIComponent(capsule.id)}`;
+  card.append(link);
   return card;
 }
 
 // ---------- Render ----------
 
 function render() {
-  const sealed = capsules.filter((c) => !isOpen(c));
-  const opened = capsules.filter(isOpen);
+  const sealed = capsules.filter((capsule) => capsuleState(capsule) === "sealed");
+  const ready = capsules.filter((capsule) => capsuleState(capsule) === "ready");
+  const opened = capsules.filter((capsule) => capsuleState(capsule) === "opened");
 
-  summary.textContent = `${sealed.length} sealed, ${opened.length} opened`;
+  const readySummary = ready.length ? `${ready.length} ready, ` : "";
+  summary.textContent = `${sealed.length} sealed, ${readySummary}${opened.length} opened`;
 
   const visible =
     currentFilter === "sealed" ? sealed : currentFilter === "opened" ? opened : capsules;
@@ -168,15 +188,17 @@ function render() {
   showStatus("none");
   visible.forEach((capsule) => grid.append(buildCard(capsule)));
 
-  if (document.querySelector(".countdown")) {
+  if (grid.querySelector(".countdown")) {
     timerId = setInterval(tick, 1000);
   }
 }
 
 // ---------- Loading data ----------
-// ---------- Loading data ----------
 
 async function loadCapsules(silent = false) {
+  if (loading) return;
+  loading = true;
+  clearInterval(timerId);
   if (!silent) {
     grid.replaceChildren();
     showStatus("loading");
@@ -188,6 +210,8 @@ async function loadCapsules(silent = false) {
   } catch (error) {
     clearInterval(timerId);
     showStatus("error", error.message);
+  } finally {
+    loading = false;
   }
 }
 

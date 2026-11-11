@@ -1,13 +1,17 @@
 """Capsule routes. Only handles request reception and service calls; no business logic here."""
 from typing import Annotated
 
-from fastapi import APIRouter, Path, Query, Response, status
+from fastapi import APIRouter, Path, Query, Request, Response, status
 
 from app.schemas.capsule import CapsuleCreate, CapsuleOut, CapsuleStatus, CapsuleUpdate
 from app.schemas.errors import ErrorResponse
 from app.services import capsule_service
 
-router = APIRouter(prefix="/capsules", tags=["Capsules"])
+router = APIRouter(
+    prefix="/capsules",
+    tags=["Capsules"],
+    responses={422: {"model": ErrorResponse, "description": "Request validation failed"}},
+)
 
 CapsuleId = Annotated[int, Path(ge=1, description="Capsule id")]
 
@@ -31,10 +35,15 @@ def list_capsules(
     response_model=CapsuleOut,
     status_code=status.HTTP_201_CREATED,
     summary="Create a capsule",
-    responses={400: {"model": ErrorResponse, "description": "Invalid opening date"}},
+    responses={
+        201: {"headers": {"Location": {"schema": {"type": "string"}}}},
+        400: {"model": ErrorResponse, "description": "Invalid opening date"},
+    },
 )
-def create_capsule(payload: CapsuleCreate):
-    return capsule_service.create_capsule(payload)
+def create_capsule(payload: CapsuleCreate, request: Request, response: Response):
+    capsule = capsule_service.create_capsule(payload)
+    response.headers["Location"] = request.url_for("get_capsule", capsule_id=capsule["id"]).path
+    return capsule
 
 
 @router.get("/{capsule_id}", response_model=CapsuleOut, summary="Get a capsule", responses=NOT_FOUND)

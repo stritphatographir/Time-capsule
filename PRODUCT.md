@@ -25,15 +25,15 @@ The current project is a local web prototype. The website has four pages.
 - `dashboard.html` lists capsules and lets readers filter by status.
 - `capsule.html` shows the countdown and lets the reader break the seal when the capsule is ready. It also requests historical events for the opening date.
 
-The website runs separately from the FastAPI backend. Swagger documents capsule creation and editing, recipient management, and scheduled opening.
+FastAPI serves the website at `/app/`. Swagger documents capsule creation and editing, recipient management, and scheduled opening.
 
 ## Capabilities and Constraints
 
 ### Current implementation, verified from repository source
 
-- The static HTML, CSS, and JavaScript frontend uses browser storage for new capsules and bundled JSON for examples. The countdown controls what the interface reveals. The underlying browser storage contains the letters.
-- The form supports a title of up to 100 characters, a letter of up to 5,000 characters, and optional song metadata from iTunes. It converts the selected local date and time to a timestamp. The default opening window starts one minute ahead and extends up to 50 years.
-- The separate FastAPI backend uses sealed, ready, and opened states. It refuses early opening and withholds the letter and any song until someone explicitly breaks the seal after the scheduled time. API records are cleared on restart.
+- The static HTML, CSS, and JavaScript frontend uses the API for new capsules, bundled JSON for examples, and browser storage for older saves at their original address.
+- The form supports a title of up to 100 characters, a letter of up to 5,000 characters, and optional song metadata from iTunes. It converts the selected local date and time to a timestamp. The server validates the opening window, which by default starts one minute ahead and extends up to 50 years.
+- FastAPI uses sealed, ready, and opened states. It refuses early opening and withholds the letter and any song until someone explicitly breaks the seal after the scheduled time. API records use a shared in-memory list and are cleared on restart.
 - The API lets users edit sealed capsules and add or remove recipient records while a capsule is sealed. The website has no recipient entry or delivery workflow.
 - Song metadata is supported by the API and capsule reader. Photos have no attachment workflow.
 
@@ -51,7 +51,7 @@ The existing product name is **Time Capsule**. The English interface uses “cap
 
 ## Evidence on Hand
 
-- `README.md` describes the project concept.
+- `README.md` describes the project and how to run it.
 - The HTML pages and `js/` implement the website and the sample capsule.
 - `capsules.json` contains the original example letters.
 - `Time-capsule backend/app/` and `Time-capsule backend/tests/` show the capsule and recipient workflows, including when the API reveals capsule contents.
