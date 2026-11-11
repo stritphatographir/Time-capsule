@@ -40,6 +40,8 @@ function buildSeal() {
 function startCountdown(card, openAt) {
   const countdown = el("div", "countdown");
   countdown.setAttribute("role", "timer");
+  countdown.setAttribute("aria-label", "Time until the capsule opens");
+  countdown.setAttribute("aria-live", "off");
   const units = [["days", 86400], ["hours", 3600], ["minutes", 60], ["seconds", 1]];
   const values = units.map(([unit]) => {
     const part = el("div", "countdown-part");
@@ -58,10 +60,11 @@ function startCountdown(card, openAt) {
     const left = Date.parse(openAt) - Date.now();
     let seconds = Math.max(0, Math.ceil(left / 1000));
     units.forEach(([, size], index) => {
-      const value = Math.floor(seconds / size);
-      values[index].textContent = String(value).padStart(2, "0");
+      const value = String(Math.floor(seconds / size)).padStart(2, "0");
+      if (values[index].textContent !== value) values[index].textContent = value;
       seconds %= size;
     });
+    countdown.classList.toggle("has-long-days", values[0].textContent.length > 3);
     if (left <= 0) {
       clearInterval(timer);
       loadCapsule();
@@ -135,7 +138,7 @@ function render(capsule, focusTitle = false) {
     startCountdown(card, capsule.openAt);
   } else if (capsule.status === "ready") {
     card.append(el("p", "ready-text", "Your capsule is ready to open."));
-    const button = el("button", "button", "Break the seal");
+    const button = el("button", "button capsule-open-button", "Break the seal");
     const errorBox = el("p", "field-error");
     errorBox.hidden = true;
     errorBox.setAttribute("role", "alert");

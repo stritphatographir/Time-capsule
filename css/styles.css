@@ -160,36 +160,7 @@ h1 {
 
 .card-meta { margin: 0; color: var(--muted); font-size: 0.95rem; }
 
-/* The countdown is the memorable element of the page */
-.countdown {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.5rem;
-  margin: 0.25rem 0;
-  padding: 0.75rem 0;
-  border-top: 1px solid var(--brass);
-  border-bottom: 1px solid var(--brass);
-  text-align: center;
-}
-
-.countdown-value {
-  display: block;
-  font-family: var(--serif);
-  font-size: 2.1rem;
-  font-weight: 700;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-
-.countdown-unit { font-size: 0.85rem; color: var(--muted); }
-
-.opens-on { margin: 0; font-size: 0.95rem; }
-
 .card-link { font-weight: 600; }
-
-@media (max-width: 480px) {
-  .countdown-value { font-size: 1.7rem; }
-}
 
 /* ---------- Create page ---------- */
 .page.narrow { max-width: 680px; }
@@ -238,6 +209,7 @@ textarea {
 .back-link { display: inline-block; margin-bottom: 1.25rem; }
 
 .capsule-card {
+  --letter-inset: clamp(0.75rem, 3vw, 1.5rem);
   padding: 2rem clamp(1rem, 4vw, 2rem);
   border: 1px solid var(--line);
   border-radius: 4px;
@@ -255,18 +227,53 @@ textarea {
 
 .capsule-title:focus { outline: none; }
 
-.capsule-card .countdown { margin: 1.5rem 0 1rem; }
-.capsule-card .countdown-value { font-size: clamp(2.2rem, 9vw, 3.4rem); }
+.countdown {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 1.5rem 0 0.75rem;
+  padding-block: 1rem;
+  border-block: 1px solid var(--brass);
+}
 
-.ready-text { margin: 1.25rem 0 1.5rem; font-family: var(--serif); font-size: 1.25rem; }
+.countdown.has-long-days {
+  grid-template-columns: minmax(0, 1.65fr) repeat(3, minmax(0, 1fr));
+}
+
+.countdown-part {
+  display: grid;
+  gap: 0.4rem;
+  text-align: center;
+}
+
+.countdown-part + .countdown-part { border-inline-start: 1px solid var(--line); }
+
+.countdown-value {
+  font-family: var(--serif);
+  font-size: clamp(1.625rem, 5vw, 3rem);
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.countdown-unit { color: var(--muted); font-size: 0.875rem; line-height: 1.25; }
+.opens-on { margin: 0; color: var(--muted); font-size: 0.95rem; }
+
+.ready-text {
+  margin: 0.75rem 0 1.25rem;
+  color: var(--muted);
+  font-family: var(--serif);
+  font-size: 1.25rem;
+}
+
+.capsule-open-button {
+  inline-size: min(100%, 16rem);
+  min-block-size: 3.25rem;
+}
 
 .demo-note {
-  margin: 1rem 0 0;
-  padding: 0.5rem 0.75rem;
-  background: var(--brass-soft);
-  color: var(--brass);
-  font-size: 0.9rem;
-  font-weight: 600;
+  margin: 1.25rem 0 0;
+  color: var(--muted);
+  font-size: 0.875rem;
 }
 
 /* Wax seal made of two halves, so it can crack */
@@ -305,18 +312,18 @@ textarea {
 /* The letter appears after the seal breaks */
 .letter-body {
   max-width: 62ch;
-  margin: 1.5rem 0;
-  padding: 1.5rem;
+  margin: 1.25rem 0 0;
+  padding: clamp(1rem, 3vw, 1.5rem) var(--letter-inset);
   border: 1px solid var(--line);
   background: var(--paper);
   font-family: var(--serif);
   font-size: 1.25rem;
-  line-height: 1.6;
+  line-height: 1.65;
 }
 
 .prediction {
   margin-top: 1.5rem;
-  padding-top: 1rem;
+  padding: 1rem calc(var(--letter-inset) + 1px) 0;
   border-top: 1px solid var(--line);
   overflow-wrap: anywhere;
 }
@@ -327,13 +334,14 @@ textarea {
   font-size: 1.4rem;
 }
 
-.prediction p { margin: 0; }
+.prediction p { margin: 0; font-size: 1.0625rem; line-height: 1.65; }
 
 .song-card {
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
   align-items: center;
+  margin-top: 1.5rem;
   padding: 0.75rem;
   border-left: 6px solid var(--brass);
   background: var(--sealed-bg);
@@ -417,5 +425,11 @@ textarea {
 
 @media (max-width: 420px) {
   .site-nav { flex-wrap: wrap; gap: 0.5rem 0.85rem; }
-  .capsule-card .countdown-value { font-size: clamp(1.5rem, 7vw, 2.2rem); }
+
+  .countdown.has-long-days {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 1rem;
+  }
+
+  .countdown.has-long-days .countdown-part:nth-child(3) { border-inline-start: 0; }
 }
