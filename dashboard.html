@@ -20,22 +20,29 @@
     </nav>
   </header>
 
-  <main class="page">
+  <main class="page dashboard">
     <h1>Your capsules</h1>
-    <p id="summary" class="summary"></p>
 
-    <div class="tabs" role="group" aria-label="Filter capsules">
-      <button class="tab" data-filter="all" aria-pressed="true">All</button>
-      <button class="tab" data-filter="sealed" aria-pressed="false">Sealed</button>
-      <button class="tab" data-filter="opened" aria-pressed="false">Opened</button>
+    <div id="status" class="status">
+      <p id="status-text" class="status-text" role="status">Loading your capsules…</p>
+      <button id="retry" type="button" class="button" hidden>Try again</button>
+      <a id="create-link" class="button" href="create.html" hidden>Create a capsule</a>
     </div>
 
-    <!-- Loading, error and empty messages appear here -->
-    <div id="status" class="status" aria-live="polite" hidden></div>
-
     <section id="grid" class="grid" aria-label="Capsules"></section>
+
+    <template id="capsule-card">
+      <article class="card">
+        <div class="card-head">
+          <h2 class="card-title"></h2>
+          <span class="badge"></span>
+        </div>
+        <p class="card-meta">Opening date <time></time></p>
+        <a class="card-link"></a>
+      </article>
+    </template>
   </main>
-<script src="js/api.js"></script>
-<script src="js/dashboard.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/dashboard.js"></script>
 </body>
 </html>

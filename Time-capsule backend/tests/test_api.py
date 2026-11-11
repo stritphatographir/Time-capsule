@@ -136,6 +136,42 @@ def test_open_reveals_letter_and_song_then_conflicts(client, monkeypatch):
     assert client.post("/capsules/77/open").status_code == 404
 
 
+def test_prediction_stays_hidden_until_the_seal_breaks(client, monkeypatch):
+    prediction = "I will finish the project."
+    created = make(client, prediction=f"  {prediction}  ")
+    assert created.status_code == 201
+    assert created.json().get("prediction") is None
+    assert client.get("/capsules").json()[0].get("prediction") is None
+
+    time_travel(monkeypatch, 60)
+    ready = client.get("/capsules/1").json()
+    assert ready["status"] == "ready"
+    assert ready.get("prediction") is None
+    assert client.get("/capsules").json()[0].get("prediction") is None
+
+    opened = client.post("/capsules/1/open")
+    assert opened.status_code == 200
+    assert opened.json()["prediction"] == prediction
+    assert client.get("/capsules/1").json()["prediction"] == prediction
+
+
+def test_prediction_validation_and_sealed_updates(client, monkeypatch):
+    assert make(client, prediction="  ").status_code == 422
+    assert make(client, prediction="x" * 161).status_code == 422
+    assert make(client).status_code == 201
+    assert make(client, prediction="I will learn to cook.").status_code == 201
+
+    assert client.patch("/capsules/1", json={"prediction": "  "}).status_code == 422
+    updated = client.patch("/capsules/1", json={"prediction": "x" * 160})
+    assert updated.status_code == 200
+    assert updated.json().get("prediction") is None
+    assert client.patch("/capsules/2", json={"prediction": None}).status_code == 200
+
+    time_travel(monkeypatch, 60)
+    assert client.post("/capsules/1/open").json()["prediction"] == "x" * 160
+    assert client.post("/capsules/2/open").json()["prediction"] is None
+
+
 #recipients
 
 def test_add_list_and_remove_recipients(client):

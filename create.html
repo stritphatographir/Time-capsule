@@ -22,50 +22,40 @@
 
   <main class="page narrow">
     <h1>New capsule</h1>
-    <p class="summary">Write a letter, add a song and choose when it opens. Until that day nobody can read it.</p>
+    <p class="summary">Write to yourself or someone you love. Choose when the letter can be opened.</p>
 
-    <form id="capsule-form" novalidate>
+    <form id="capsule-form">
       <div class="field">
         <label for="title">Title</label>
-        <input id="title" name="title" type="text" maxlength="100" autocomplete="off">
-        <p class="field-error" id="title-error" hidden></p>
+        <input id="title" name="title" type="text" maxlength="100" required>
       </div>
 
       <div class="field">
         <label for="message">Letter</label>
-        <textarea id="message" name="message" maxlength="5000"></textarea>
-        <p class="field-hint" id="char-count">0 / 5000</p>
-        <p class="field-error" id="message-error" hidden></p>
+        <textarea id="message" name="message" maxlength="5000" required></textarea>
       </div>
 
       <div class="field">
         <label for="openAt">Opens on</label>
-        <input id="openAt" name="openAt" type="datetime-local">
-        <p class="field-hint">Your local time. Pick at least one minute from now.</p>
-        <p class="field-error" id="openAt-error" hidden></p>
+        <input id="openAt" name="openAt" type="datetime-local" aria-describedby="opening-hint" required>
+        <p class="field-hint" id="opening-hint">Your local time. Choose a time at least a minute ahead.</p>
       </div>
 
-      <fieldset class="song-box">
-        <legend>Song (optional)</legend>
-
-        <div class="song-search">
-          <input id="song-query" type="search" placeholder="Song or artist" aria-label="Search for a song" autocomplete="off">
-          <button type="button" id="song-search-button" class="button button-secondary">Search</button>
-        </div>
-
-        <p id="song-status" class="search-status" aria-live="polite"></p>
-        <ul id="song-results" class="song-results"></ul>
-        <div id="selected-song" class="selected-song" aria-live="polite" hidden></div>
-      </fieldset>
+      <div class="field">
+        <label for="prediction">Prediction (optional)</label>
+        <input id="prediction" name="prediction" type="text" maxlength="160" aria-describedby="prediction-hint">
+        <p class="field-hint" id="prediction-hint">What do you think will be true by then? You’ll see your guess when you open the letter.</p>
+      </div>
 
       <div class="form-actions">
         <button type="submit" class="button">Seal capsule</button>
       </div>
+      <p class="field-hint">This demo keeps capsules until the API server restarts.</p>
+      <p class="field-error" id="form-error" role="alert" hidden></p>
     </form>
-
-    <section id="result" class="result" tabindex="-1" hidden></section>
   </main>
 
+  <script src="js/api.js"></script>
   <script src="js/create.js"></script>
 </body>
 </html>
