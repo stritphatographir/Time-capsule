@@ -11,7 +11,7 @@ const params = new URLSearchParams(window.location.search);
 const capsuleId = params.get("id");
 
 // The demo parameter adjusts a bundled example only. The API controls saved capsules.
-const demoSeconds = Number(params.get("demo")) || 0;
+const demoSeconds = capsuleId === DEMO_CAPSULE_ID ? 10 : Number(params.get("demo")) || 0;
 const demoOpenAt = demoSeconds > 0 && demoSeconds <= 3600
   ? new Date(Date.now() + demoSeconds * 1000).toISOString()
   : null;
@@ -28,8 +28,6 @@ function el(tag, className, text) {
   if (text !== undefined) node.textContent = text;
   return node;
 }
-
-const isOpen = (c) => new Date(c.openAt).getTime() <= Date.now();
 
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
@@ -54,26 +52,6 @@ function splitTime(ms) {
 function recipientsText(count) {
   if (count === 0) return "Only for you";
   return count === 1 ? "Shared with 1 person" : `Shared with ${count} people`;
-}
-
-// Only older browser saves and examples need a browser-side seal marker.
-const brokenKey = () => `capsule-broken:${capsuleId}`;
-
-function wasBroken() {
-  if (capsule.demo) return false;
-  try {
-    return localStorage.getItem(brokenKey()) === "1";
-  } catch {
-    return false;
-  }
-}
-
-function markBroken() {
-  try {
-    localStorage.setItem(brokenKey(), "1");
-  } catch {
-    // хранилище недоступно, это не страшно
-  }
 }
 
 // ---------- Messages: loading, error, not found ----------
@@ -119,7 +97,7 @@ function buildCountdown(openAt) {
   const wrap = el("div", "countdown");
   wrap.dataset.openAt = openAt;
   wrap.setAttribute("role", "timer");
-  wrap.setAttribute("aria-label", "Time until the capsule opens");
+  wrap.setAttribute("aria-label", "Time until you can break the seal");
   wrap.setAttribute("aria-live", "off");
 
   ["days", "hours", "minutes", "seconds"].forEach((unit) => {
@@ -182,7 +160,7 @@ function renderSealed() {
   card.append(el("p", "opens-on", `Opens on ${formatDateTime(capsule.openAt)}`));
 
   if (capsule.demo) {
-    card.append(el("p", "demo-note", `Demo mode: the opening date was moved to ${demoSeconds} seconds from page load.`));
+    card.append(el("p", "demo-note", "Break the seal when the countdown ends."));
   }
 
   stage.append(card);
@@ -211,17 +189,13 @@ async function breakSeal(card, button, errorBox) {
   button.disabled = true;
   errorBox.hidden = true;
 
-  if (isApiCapsuleId(capsuleId)) {
-    try {
-      capsule = await openCapsule(capsuleId);
-    } catch (error) {
-      errorBox.textContent = error.message;
-      errorBox.hidden = false;
-      button.disabled = false;
-      return;
-    }
-  } else if (!capsule.demo) {
-    markBroken();
+  try {
+    capsule = await openCapsule(capsuleId, demoOpenAt);
+  } catch (error) {
+    errorBox.textContent = error.message;
+    errorBox.hidden = false;
+    button.disabled = false;
+    return;
   }
 
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -255,6 +229,17 @@ function buildSong(song) {
     audio.controls = true;
     audio.src = song.previewUrl;
     info.append(audio);
+  }
+
+  const storeUrl = songStoreUrl(song);
+  if (storeUrl) {
+    const credit = el("p", "field-hint", "Preview courtesy of iTunes. ");
+    const link = el("a", "", "Open in Apple Music");
+    link.href = storeUrl;
+    link.target = "_blank";
+    link.rel = "noopener";
+    credit.append(link);
+    info.append(credit);
   }
 
   box.append(info);
@@ -293,13 +278,12 @@ function render() {
   clearInterval(timerId);
   stage.replaceChildren();
 
-  const status = capsule.status || (!isOpen(capsule) ? "sealed" : wasBroken() ? "opened" : "ready");
-  if (status === "sealed") {
-    renderSealed();
-  } else if (status === "ready") {
+  if (capsule.status === "opened") {
+    renderOpened(false);
+  } else if (capsule.status === "ready") {
     renderReady();
   } else {
-    renderOpened(false);
+    renderSealed();
   }
 
   loadHistory();

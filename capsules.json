@@ -32,5 +32,19 @@
     "recipientCount": 0,
     "message": "Hi, future me.\nToday I started the web programming course and I still don’t know how a server works. I hope that by the time you read this, you can build one.",
     "song": { "title": "Dreams", "artist": "Fleetwood Mac" }
+  },
+  {
+    "id": "demo",
+    "title": "The 10-second capsule",
+    "createdAt": "2026-11-11T00:00:00Z",
+    "recipientCount": 0,
+    "message": "Dear future me,\nYou just opened your first time capsule. Here’s the song I picked for this moment.",
+    "song": {
+      "title": "Flashing Lights",
+      "artist": "Kanye West",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/4c/be/8e/4cbe8e05-1130-8697-6775-8e52408e857a/mzaf_10845907730040426322.plus.aac.p.m4a",
+      "storeUrl": "https://music.apple.com/us/song/1442846712",
+      "artwork": "https://is1-ssl.mzstatic.com/image/thumb/Music128/v4/39/25/2d/39252d65-2d50-b991-0962-f7a98a761271/00602517483507.rgb.jpg/100x100bb.jpg"
+    }
   }
 ]

@@ -11,10 +11,6 @@ let timerId = null;
 let loading = false;
 let nextRefreshAt = 0;
 
-function capsuleState(capsule) {
-  return capsule.status ?? (Date.parse(capsule.openAt) <= Date.now() ? "opened" : "sealed");
-}
-
 // Создаёт элемент. Текст ставим через textContent, а не innerHTML (безопасно).
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -131,7 +127,7 @@ function recipientsText(capsule) {
 }
 
 function buildCard(capsule) {
-  const state = capsuleState(capsule);
+  const state = capsule.status;
   const card = el("article", state === "sealed" ? "card card-sealed" : "card card-open");
   const labels = { sealed: "Sealed", ready: "Ready", opened: "Opened" };
 
@@ -167,9 +163,9 @@ function buildCard(capsule) {
 // ---------- Render ----------
 
 function render() {
-  const sealed = capsules.filter((capsule) => capsuleState(capsule) === "sealed");
-  const ready = capsules.filter((capsule) => capsuleState(capsule) === "ready");
-  const opened = capsules.filter((capsule) => capsuleState(capsule) === "opened");
+  const sealed = capsules.filter((capsule) => capsule.status === "sealed");
+  const ready = capsules.filter((capsule) => capsule.status === "ready");
+  const opened = capsules.filter((capsule) => capsule.status === "opened");
 
   const readySummary = ready.length ? `${ready.length} ready, ` : "";
   summary.textContent = `${sealed.length} sealed, ${readySummary}${opened.length} opened`;

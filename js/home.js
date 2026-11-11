@@ -16,10 +16,6 @@ function el(tag, className, text) {
   return node;
 }
 
-function capsuleState(capsule) {
-  return capsule.status ?? (Date.parse(capsule.openAt) <= Date.now() ? "opened" : "sealed");
-}
-
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 }
@@ -59,10 +55,10 @@ function renderStats() {
   }
 
   const sealed = capsules
-    .filter((capsule) => capsuleState(capsule) === "sealed")
+    .filter((capsule) => capsule.status === "sealed")
     .sort((a, b) => new Date(a.openAt) - new Date(b.openAt));
-  const ready = capsules.filter((capsule) => capsuleState(capsule) === "ready");
-  const opened = capsules.filter((capsule) => capsuleState(capsule) === "opened");
+  const ready = capsules.filter((capsule) => capsule.status === "ready");
+  const opened = capsules.filter((capsule) => capsule.status === "opened");
 
   const readySummary = ready.length ? `, ${ready.length} ready to open,` : "";
   statsBox.append(`You have ${plural(sealed.length, "sealed capsule")}${readySummary} and ${opened.length} opened. `);
@@ -88,7 +84,7 @@ function renderStats() {
 // ---------- Letter from the past ----------
 
 function pickLetter() {
-  const pool = capsules.filter((capsule) => capsuleState(capsule) === "opened" && capsule.message);
+  const pool = capsules.filter((capsule) => capsule.status === "opened" && capsule.message);
   const choices = pool.length > 1 ? pool.filter((c) => c.id !== lastLetterId) : pool;
   const letter = choices[Math.floor(Math.random() * choices.length)];
   return { letter, count: pool.length };
@@ -101,13 +97,13 @@ function renderLetter(focusButton = false) {
   const { letter, count } = pickLetter();
 
   if (!letter) {
-    if (capsules.some((capsule) => capsuleState(capsule) === "ready")) {
+    if (capsules.some((capsule) => capsule.status === "ready")) {
       letterBox.append(el("p", "letter-quote", "Break the seal on a ready capsule to read its letter."));
       return;
     }
 
     const next = capsules
-      .filter((capsule) => capsuleState(capsule) === "sealed")
+      .filter((capsule) => capsule.status === "sealed")
       .sort((a, b) => new Date(a.openAt) - new Date(b.openAt))[0];
 
     letterBox.append(

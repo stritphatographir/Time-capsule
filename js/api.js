@@ -1,4 +1,5 @@
 const LOCAL_APP_URL = "http://127.0.0.1:8000/app/";
+const DEMO_CAPSULE_ID = "demo";
 const liveServerHost = window.location.hostname === "localhost" ? "localhost" : "127.0.0.1";
 const API_ORIGIN = window.location.pathname.startsWith("/app/")
   ? ""
@@ -41,6 +42,18 @@ function searchSongsOnServer(query) {
   return requestApi(`/songs/search?${new URLSearchParams({ q: query })}`);
 }
 
+function songStoreUrl(song) {
+  try {
+    const url = new URL(song.storeUrl);
+    if (url.protocol === "https:" && ["music.apple.com", "itunes.apple.com"].includes(url.hostname)) {
+      return url.href;
+    }
+  } catch {
+    // Older saves may have no store URL.
+  }
+  return null;
+}
+
 function isApiCapsuleId(id) {
   return /^api:[1-9]\d*$/.test(id);
 }
@@ -75,15 +88,46 @@ function getBrowserCapsules() {
   }
 }
 
+// Keep the seal markers written by earlier versions of the capsule page.
+const brokenKey = (id) => `capsule-broken:${id}`;
+
+function wasBroken(capsule) {
+  if (capsule.demo) return false;
+  try {
+    return localStorage.getItem(brokenKey(capsule.id)) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function browserCapsuleStatus(capsule) {
+  if (Date.parse(capsule.openAt) <= Date.now()) {
+    return wasBroken(capsule) ? "opened" : "ready";
+  }
+  return "sealed";
+}
+
 function applyLock(capsule) {
-  if (Date.parse(capsule.openAt) <= Date.now()) return capsule;
+  const status = browserCapsuleStatus(capsule);
+  if (status === "opened") return { ...capsule, status };
   const { message, song, ...metadata } = capsule;
-  return metadata;
+  return { ...metadata, status };
 }
 
 async function getCapsules() {
   const [examples, server] = await Promise.all([getExamples(), getServerCapsules()]);
-  return [...examples, ...getBrowserCapsules()].map(applyLock).concat(server);
+  const listedExamples = examples.filter((capsule) => capsule.id !== DEMO_CAPSULE_ID);
+  return [...listedExamples, ...getBrowserCapsules()].map(applyLock).concat(server);
+}
+
+async function findBrowserCapsule(id, demoOpenAt) {
+  const examples = await getExamples();
+  const example = examples.find((item) => String(item.id) === id);
+  if (example && demoOpenAt) {
+    return { ...example, openAt: demoOpenAt, demo: true };
+  }
+  if (example?.id === DEMO_CAPSULE_ID) return null;
+  return example ?? getBrowserCapsules().find((item) => String(item.id) === id);
 }
 
 async function getCapsule(id, demoOpenAt = null) {
@@ -96,13 +140,8 @@ async function getCapsule(id, demoOpenAt = null) {
     }
   }
 
-  const examples = await getExamples();
-  const example = examples.find((item) => String(item.id) === id);
-  if (example) {
-    return applyLock(demoOpenAt ? { ...example, openAt: demoOpenAt, demo: true } : example);
-  }
-  const saved = getBrowserCapsules().find((item) => String(item.id) === id);
-  return saved ? applyLock(saved) : null;
+  const capsule = await findBrowserCapsule(id, demoOpenAt);
+  return capsule ? applyLock(capsule) : null;
 }
 
 async function createCapsule(payload) {
@@ -114,7 +153,26 @@ async function createCapsule(payload) {
   return apiCapsule(record);
 }
 
-async function openCapsule(id) {
+async function openBrowserCapsule(id, demoOpenAt) {
+  const capsule = await findBrowserCapsule(id, demoOpenAt);
+  if (!capsule) throw new Error("We couldn’t find this capsule.");
+  if (browserCapsuleStatus(capsule) === "sealed") {
+    throw new Error("The opening date hasn’t arrived yet.");
+  }
+
+  if (!capsule.demo) {
+    try {
+      localStorage.setItem(brokenKey(capsule.id), "1");
+    } catch {
+      // The capsule can still be opened for this visit.
+    }
+  }
+  return { ...capsule, status: "opened" };
+}
+
+async function openCapsule(id, demoOpenAt = null) {
+  if (!isApiCapsuleId(id)) return openBrowserCapsule(id, demoOpenAt);
+
   try {
     return apiCapsule(await requestCapsules(`/${id.slice(4)}/open`, { method: "POST" }));
   } catch (error) {
