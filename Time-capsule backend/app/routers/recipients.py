@@ -3,6 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Path, Response, status
 
+from app.database import DB
 from app.schemas.errors import ErrorResponse
 from app.schemas.recipient import RecipientCreate, RecipientOut
 from app.services import recipient_service
@@ -20,8 +21,8 @@ NOT_FOUND = {404: {"model": ErrorResponse, "description": "Capsule or recipient 
 
 
 @router.get("", response_model=list[RecipientOut], summary="List recipients", responses=NOT_FOUND)
-def list_recipients(capsule_id: CapsuleId):
-    return recipient_service.list_recipients(capsule_id)
+def list_recipients(db: DB, capsule_id: CapsuleId):
+    return recipient_service.list_recipients(db, capsule_id)
 
 
 @router.post(
@@ -34,8 +35,8 @@ def list_recipients(capsule_id: CapsuleId):
         409: {"model": ErrorResponse, "description": "Duplicate, limit reached or capsule not sealed"},
     },
 )
-def add_recipient(capsule_id: CapsuleId, payload: RecipientCreate):
-    return recipient_service.add_recipient(capsule_id, payload)
+def add_recipient(db: DB, capsule_id: CapsuleId, payload: RecipientCreate):
+    return recipient_service.add_recipient(db, capsule_id, payload)
 
 
 @router.delete(
@@ -44,6 +45,6 @@ def add_recipient(capsule_id: CapsuleId, payload: RecipientCreate):
     summary="Remove a recipient",
     responses={**NOT_FOUND, 409: {"model": ErrorResponse, "description": "Capsule is no longer sealed"}},
 )
-def remove_recipient(capsule_id: CapsuleId, recipient_id: RecipientId):
-    recipient_service.remove_recipient(capsule_id, recipient_id)
+def remove_recipient(db: DB, capsule_id: CapsuleId, recipient_id: RecipientId):
+    recipient_service.remove_recipient(db, capsule_id, recipient_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

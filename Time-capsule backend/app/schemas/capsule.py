@@ -22,6 +22,7 @@ class Song(CamelModel):
 class CapsuleCreate(CamelModel):
     title: str = Field(min_length=1, max_length=100)
     message: str = Field(min_length=1, max_length=5000)
+    prediction: str | None = Field(default=None, min_length=1, max_length=240)
     open_at: datetime
     song: Song | None = None
 
@@ -29,6 +30,7 @@ class CapsuleCreate(CamelModel):
         json_schema_extra={
             "example": {
                 "title": "A letter to myself",
+                "prediction": "I will be teaching art.",
                 "message": "Dear me,\nI hope the project is finished.",
                 "openAt": "2030-01-01T12:00:00Z",
                 "song": {"title": "Here Comes the Sun", "artist": "The Beatles"},
@@ -42,6 +44,7 @@ class CapsuleUpdate(CamelModel):
 
     title: str | None = Field(default=None, min_length=1, max_length=100)
     message: str | None = Field(default=None, min_length=1, max_length=5000)
+    prediction: str | None = Field(default=None, min_length=1, max_length=240)
     open_at: datetime | None = None
     song: Song | None = None  # Explicit null removes the song
 
@@ -59,10 +62,16 @@ class CapsuleOut(CamelModel):
     id: int
     title: str
     created_at: datetime
+    prediction: str | None = Field(default=None, min_length=1, max_length=240)
     open_at: datetime
     opened_at: datetime | None = None
     status: CapsuleStatus
+    reflection: str | None = None
     recipient_count: int
     # The server returns message and song only when the seal is broken (status = opened)
     message: str | None = None
     song: Song | None = None
+
+
+class Reflection(CamelModel):
+    text: str = Field(min_length=1, max_length=1500)

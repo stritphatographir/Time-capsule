@@ -1,23 +1,43 @@
-# Time-capsule
+# Time Capsule
 
-Write a letter to your future self or someone you love, optionally add a song, and choose when to break the seal.
+Send a letter, a song, and a prediction to your future self. FastAPI holds the contents back until the opening date arrives and someone breaks the seal. After opening, you can write a reflection and revisit the letter on its anniversary.
 
-## Run locally
+## Run locally on Windows
 
-From the repository root on Windows:
+You need Python 3.13 or later and PostgreSQL. The included Docker Compose service starts a local PostgreSQL instance with a named volume. From the repository root, run these commands in the same PowerShell window:
 
 ```powershell
-py -3.13 -m venv venv
-.\venv\Scripts\python.exe -m pip install -r 'Time-capsule backend/requirements.txt'
-.\venv\Scripts\python.exe -m uvicorn app.main:app --app-dir 'Time-capsule backend' --host 127.0.0.1 --port 8000
+$env:POSTGRES_PASSWORD = [guid]::NewGuid().ToString('N')
+# Save this value privately for future runs with the same volume.
+$env:DATABASE_URL = "postgresql+psycopg://capsule:$($env:POSTGRES_PASSWORD)@127.0.0.1:5432/capsules"
+docker compose up -d --wait
+py -3.13 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r 'Time-capsule backend/requirements-dev.txt'
+.\.venv\Scripts\python.exe -m alembic -c 'Time-capsule backend/alembic.ini' upgrade head
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --app-dir 'Time-capsule backend' --host 127.0.0.1 --port 8000
 ```
 
-Open [Time Capsule](http://127.0.0.1:8000/app/) or [Swagger](http://127.0.0.1:8000/docs). The same FastAPI process serves both. [The health check](http://127.0.0.1:8000/healthz) reports whether the API is running.
+For later runs, reuse the same password and URL. With an existing PostgreSQL server, set `DATABASE_URL` to a database your role owns and skip the Docker commands. URL-encode special characters in credentials. Apply Alembic migrations before starting the API. Tables and data survive process restarts and `docker compose down`.
 
-For Live Server development, the frontend still works at [127.0.0.1:5500](http://127.0.0.1:5500/) with the API running on port 8000. Older browser saves remain visible at the address where they were created. Bundled examples are available at either address.
+Open [the website](http://127.0.0.1:8000/app/) to create letters, attach songs, and break seals. Use [Swagger UI](http://127.0.0.1:8000/docs) for the full API, including predictions, reflections, anniversaries, and recipients. Original browser saves and bundled examples are separate from database records. This classroom app shares one collection and has no user authentication.
 
-## Capsule flow
+## Demonstrate the assignment in Swagger
 
-New capsules are saved through FastAPI. The server marks a capsule **sealed**, **ready**, or **opened** and returns the letter and song only after a successful opening. Swagger also exposes editing, deletion, and recipient management.
+1. Expand **POST /capsules**, select **Try it out**, enter a title, message, future `openAt` in ISO 8601, and optional `prediction`, then **Execute**. Copy the returned ID. Expect 201 with the letter and prediction hidden. A past opening date gives 400.
+2. Use **POST /capsules/{capsule_id}/recipients** to add two people. Try adding the first email again in uppercase. The duplicate gives 409. Listing the capsule shows the recipient count.
+3. Before the opening date, try editing the title (200), opening the seal (403), and writing a reflection (403). Restart the API with the same URL and retrieve the capsule and its recipients.
+4. For a short demo, set `$env:CAPSULE_MIN_LEAD_SECONDS = '2'` before starting the API and create a letter due about 30 seconds from now. When ready, **POST /capsules/{capsule_id}/open** reveals its prediction and song. **PUT /capsules/{capsule_id}/reflection** accepts `{"text":"Here is what actually happened."}`. Retrieve the letter to see the original prediction and your later reflection together.
+5. In **GET /capsules/anniversaries**, enter the UTC date one year after you opened that letter. The archive returns previously opened letters whose opening anniversary falls on that day. Without a date it uses today in UTC.
+6. Delete the capsule (204). Getting it again gives 404 and PostgreSQL removes its recipients.
 
-The local prototype uses a shared list and in-memory storage. API records reset when the process restarts.
+## Data model and tests
+
+A capsule has many recipients. PostgreSQL enforces the foreign key, cascading deletion, unique normalized email per capsule, and constraints on seal dates and reflections. The services lock the parent row when changing a capsule or its recipients so concurrent requests respect the seal and the 20-recipient limit.
+
+Tests require a PostgreSQL database where the test role can create schemas. Each test migrates a uniquely named schema and removes it afterward. In a terminal with the environment above:
+
+```powershell
+$env:TEST_DATABASE_URL = $env:DATABASE_URL
+cd 'Time-capsule backend'
+..\.venv\Scripts\python.exe -m pytest -q
+```

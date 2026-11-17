@@ -1,0 +1,18 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: capsules
+      POSTGRES_USER: capsule
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD first}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - capsule_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U capsule -d capsules"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+volumes:
+  capsule_data:

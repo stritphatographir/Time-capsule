@@ -1,9 +1,11 @@
 """Capsule routes. Only handles request reception and service calls; no business logic here."""
+from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Path, Query, Request, Response, status
 
-from app.schemas.capsule import CapsuleCreate, CapsuleOut, CapsuleStatus, CapsuleUpdate
+from app.schemas.capsule import CapsuleCreate, CapsuleOut, CapsuleStatus, CapsuleUpdate, Reflection
+from app.database import DB
 from app.schemas.errors import ErrorResponse
 from app.services import capsule_service
 
@@ -20,6 +22,7 @@ NOT_FOUND = {404: {"model": ErrorResponse, "description": "Capsule not found"}}
 
 @router.get("", response_model=list[CapsuleOut], summary="List capsules")
 def list_capsules(
+    db: DB,
     status_filter: Annotated[
         CapsuleStatus | None, Query(alias="status", description="Filter by status")
     ] = None,
@@ -27,7 +30,7 @@ def list_capsules(
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
     offset: Annotated[int, Query(ge=0)] = 0,
 ):
-    return capsule_service.list_capsules(status_filter, search, limit, offset)
+    return capsule_service.list_capsules(db, status_filter, search, limit, offset)
 
 
 @router.post(
@@ -40,15 +43,28 @@ def list_capsules(
         400: {"model": ErrorResponse, "description": "Invalid opening date"},
     },
 )
-def create_capsule(payload: CapsuleCreate, request: Request, response: Response):
-    capsule = capsule_service.create_capsule(payload)
+def create_capsule(db: DB, payload: CapsuleCreate, request: Request, response: Response):
+    capsule = capsule_service.create_capsule(db, payload)
     response.headers["Location"] = request.url_for("get_capsule", capsule_id=capsule["id"]).path
     return capsule
 
 
+@router.get("/anniversaries", response_model=list[CapsuleOut], summary="On this day in past years")
+def anniversaries(db: DB, day: date | None = None, limit: int = Query(20, ge=1, le=100), offset: int = Query(0, ge=0)):
+    """Revisit letters first opened on this UTC month and day in an earlier year."""
+    return capsule_service.anniversaries(db, day or capsule_service.utcnow().date(), limit, offset)
+
+
+@router.put("/{capsule_id}/reflection", response_model=CapsuleOut, summary="Write back to your past self",
+            responses={**NOT_FOUND, 403: {"model": ErrorResponse}})
+def reflect(db: DB, capsule_id: CapsuleId, payload: Reflection):
+    """After opening a letter, record what happened. Repeating this request replaces the reflection."""
+    return capsule_service.record_reflection(db, capsule_id, payload.text)
+
+
 @router.get("/{capsule_id}", response_model=CapsuleOut, summary="Get a capsule", responses=NOT_FOUND)
-def get_capsule(capsule_id: CapsuleId):
-    return capsule_service.get_capsule(capsule_id)
+def get_capsule(db: DB, capsule_id: CapsuleId):
+    return capsule_service.get_capsule(db, capsule_id)
 
 
 @router.patch(
@@ -61,8 +77,8 @@ def get_capsule(capsule_id: CapsuleId):
         409: {"model": ErrorResponse, "description": "Capsule is no longer sealed"},
     },
 )
-def update_capsule(capsule_id: CapsuleId, payload: CapsuleUpdate):
-    return capsule_service.update_capsule(capsule_id, payload)
+def update_capsule(db: DB, capsule_id: CapsuleId, payload: CapsuleUpdate):
+    return capsule_service.update_capsule(db, capsule_id, payload)
 
 
 @router.delete(
@@ -71,8 +87,8 @@ def update_capsule(capsule_id: CapsuleId, payload: CapsuleUpdate):
     summary="Delete a capsule with its recipients",
     responses=NOT_FOUND,
 )
-def delete_capsule(capsule_id: CapsuleId):
-    capsule_service.delete_capsule(capsule_id)
+def delete_capsule(db: DB, capsule_id: CapsuleId):
+    capsule_service.delete_capsule(db, capsule_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -86,5 +102,5 @@ def delete_capsule(capsule_id: CapsuleId):
         409: {"model": ErrorResponse, "description": "Already opened"},
     },
 )
-def open_capsule(capsule_id: CapsuleId):
-    return capsule_service.open_capsule(capsule_id)
+def open_capsule(db: DB, capsule_id: CapsuleId):
+    return capsule_service.open_capsule(db, capsule_id)
