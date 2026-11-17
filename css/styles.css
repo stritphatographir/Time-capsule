@@ -614,3 +614,25 @@ legend { padding: 0 0.35rem; }
 }
 
 .letter-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem; }
+
+
+/* Signed notes on the capsule page */
+.capsule-insert {
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+  text-align: start;
+}
+.capsule-insert .history-title { margin: 0; }
+.note-composer { margin-top: 0.8rem; }
+.note-composer summary { cursor: pointer; width: fit-content; }
+.note-composer label, .note-composer button { margin-top: 1rem; }
+.note-composer textarea { min-height: 6rem; }
+.signed-note {
+  margin: 1.25rem 0;
+  padding-inline-start: 1rem;
+  border-inline-start: 2px solid var(--line);
+  overflow-wrap: anywhere;
+}
+.signed-note p { font: 1.15rem/1.5 var(--serif); margin: 0; white-space: pre-wrap; }
+.keepsake { margin-top: 1.5rem; }

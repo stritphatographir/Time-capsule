@@ -38,6 +38,14 @@ function requestCapsules(path = "", options = {}) {
   return requestApi("/capsules" + path, options);
 }
 
+function submitCapsuleNote(id, signature, text) {
+  return requestCapsules(`/${id.slice(4)}/notes`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ signature, text }),
+  });
+}
+
 function searchSongsOnServer(query) {
   return requestApi(`/songs/search?${new URLSearchParams({ q: query })}`);
 }

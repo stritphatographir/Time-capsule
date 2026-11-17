@@ -4,15 +4,16 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import extract, func, select
 from sqlalchemy.orm import Session, selectinload
 
-from app.models import Capsule
+from app.models import Capsule, CapsuleNote
 from app.exceptions import (
     AlreadyOpenedError,
     CapsuleLockedError,
     CapsuleNotEditableError,
     CapsuleNotFoundError,
     InvalidOpenDateError,
+    NoteLimitError,
 )
-from app.schemas.capsule import CapsuleCreate, CapsuleStatus, CapsuleUpdate
+from app.schemas.capsule import CapsuleCreate, CapsuleStatus, CapsuleUpdate, SignedNote
 
 # Minimum lead time before opening. Can be reduced for demonstration:
 #   CAPSULE_MIN_LEAD_SECONDS=5 uvicorn app.main:app --reload
@@ -87,8 +88,35 @@ def list_capsules(db: Session, status=None, search=None, limit=20, offset=0):
     return [public(row, now) for row in rows]
 
 
+MAX_NOTES = 20
+
+
+def note_count(db, capsule_id):
+    return db.scalar(select(func.count()).select_from(CapsuleNote).where(CapsuleNote.capsule_id == capsule_id))
+
+
+def capsule_detail(db, row, now):
+    data = public(row, now)
+    if row.opened_at is None:
+        return {**data, "note_count": note_count(db, row.id), "notes": []}
+    query = select(CapsuleNote.signature, CapsuleNote.text).where(CapsuleNote.capsule_id == row.id)
+    notes = db.execute(query.order_by(CapsuleNote.id)).mappings().all()
+    return {**data, "note_count": len(notes), "notes": notes}
+
+
 def get_capsule(db, capsule_id):
-    return public(get_record(db, capsule_id), utcnow())
+    return capsule_detail(db, get_record(db, capsule_id), utcnow())
+
+
+def add_note(db: Session, capsule_id: int, payload: SignedNote):
+    row = get_record(db, capsule_id, lock=True)
+    require_sealed(row)
+    count = note_count(db, row.id)
+    if count >= MAX_NOTES:
+        raise NoteLimitError(f"A capsule can hold at most {MAX_NOTES} notes.")
+    db.add(CapsuleNote(capsule_id=row.id, **payload.model_dump()))
+    db.commit()
+    return {"note_count": count + 1}
 
 
 def update_capsule(db, capsule_id, payload: CapsuleUpdate):
@@ -118,7 +146,7 @@ def open_capsule(db, capsule_id):
         raise CapsuleLockedError(f"This capsule cannot be opened before {row.open_at.isoformat()}.")
     row.opened_at = now
     db.commit()
-    return public(row, now)
+    return capsule_detail(db, row, now)
 
 
 def record_reflection(db, capsule_id, text):

@@ -59,3 +59,8 @@ class RecipientLimitError(AppError):
 class MusicSearchUnavailableError(AppError):
     status_code = 502
     code = "music_search_unavailable"
+
+
+class NoteLimitError(AppError):
+    status_code = 409
+    code = "note_limit_reached"

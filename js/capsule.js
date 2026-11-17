@@ -153,6 +153,63 @@ function metaText() {
   return `${recipients}. Written on ${formatDate(capsule.createdAt)}.`;
 }
 
+function noteCountText(count) {
+  return count === 1 ? "1 note inside" : `${count} notes inside`;
+}
+
+function buildNoteForm() {
+  const section = el("section", "capsule-insert");
+  const heading = el("h2", "history-title", "Notes from friends");
+  const count = el("p", "field-hint", noteCountText(capsule.noteCount));
+  section.append(heading, count);
+  if (capsule.noteCount >= 20) return section;
+
+  const details = el("details", "note-composer");
+  details.append(el("summary", "card-link", "Tuck in a note"));
+  const form = el("form");
+  form.append(el("p", "field-hint", "Anyone with this capsule link can leave a signed note before the timer ends. The notes appear when the seal is broken."));
+  const signature = el("input");
+  signature.type = "text";
+  signature.id = "note-signature";
+  signature.maxLength = 80;
+  signature.required = true;
+  const text = el("textarea");
+  text.id = "note-text";
+  text.maxLength = 600;
+  text.required = true;
+  for (const [input, caption] of [[signature, "Sign your name"], [text, "Your note"]]) {
+    const label = el("label", "", caption);
+    label.htmlFor = input.id;
+    form.append(label, input);
+  }
+  const submit = el("button", "button", "Seal this note");
+  submit.type = "submit";
+  const feedback = el("p", "field-hint");
+  feedback.setAttribute("role", "status");
+  form.append(submit);
+  details.append(form);
+  section.append(details, feedback);
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    submit.disabled = true;
+    try {
+      const result = await submitCapsuleNote(capsuleId, signature.value.trim(), text.value.trim());
+      capsule.noteCount = result.noteCount;
+      count.textContent = noteCountText(result.noteCount);
+      feedback.textContent = "Your note is sealed inside.";
+      form.reset();
+      details.open = false;
+      details.hidden = result.noteCount >= 20;
+    } catch (error) {
+      feedback.textContent = error.message;
+    } finally {
+      submit.disabled = false;
+    }
+  });
+  return section;
+}
+
 function renderSealed() {
   const card = el("article", "capsule-card is-centered");
   card.append(buildSeal(), buildTitle(), el("p", "card-meta", metaText()));
@@ -163,6 +220,7 @@ function renderSealed() {
     card.append(el("p", "demo-note", "Break the seal when the countdown ends."));
   }
 
+  if (isApiCapsuleId(capsuleId)) card.append(buildNoteForm());
   stage.append(card);
   // The server may still report sealed if the browser clock is ahead.
   const pastLocalDeadline = Date.parse(capsule.openAt) <= Date.now();
@@ -173,6 +231,8 @@ function renderReady() {
   const card = el("article", "capsule-card is-centered");
   card.append(buildSeal(), buildTitle(), el("p", "card-meta", metaText()));
   card.append(el("p", "ready-text", "The day has come. This capsule is ready to open."));
+
+  if (capsule.noteCount) card.append(el("p", "field-hint", noteCountText(capsule.noteCount)));
 
   const button = el("button", "button capsule-open-button", "Break the seal");
   button.type = "button";
@@ -246,6 +306,31 @@ function buildSong(song) {
   return { box, audio };
 }
 
+function downloadKeepsake() {
+  const parts = [
+    capsule.title,
+    `Written on ${formatDate(capsule.createdAt)}`,
+    capsule.openedAt ? `Opened on ${formatDate(capsule.openedAt)}` : `Opening date: ${formatDate(capsule.openAt)}`,
+    capsule.message,
+  ];
+  if (capsule.song) parts.push(`Soundtrack\n${capsule.song.title} - ${capsule.song.artist}`);
+  if (capsule.prediction) parts.push(`My prediction\n${capsule.prediction}`);
+  if (capsule.reflection) parts.push(`My reflection\n${capsule.reflection}`);
+  if (capsule.notes?.length) {
+    parts.push("Notes from friends");
+    for (const note of capsule.notes) parts.push(`${note.text}\nSigned by ${note.signature}`);
+  }
+  const url = URL.createObjectURL(new Blob([parts.join("\n\n") + "\n"], { type: "text/plain;charset=utf-8" }));
+  const link = el("a");
+  link.href = url;
+  const filename = capsule.title.replace(/[<>:"/\\|?*\x00-\x1f]/g, "-").slice(0, 80);
+  link.download = `Time Capsule - ${filename}.txt`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 function renderOpened(justOpened) {
   clearInterval(timerId);
   stage.replaceChildren();
@@ -265,6 +350,20 @@ function renderOpened(justOpened) {
     card.append(song.box);
   }
 
+  if (capsule.notes?.length) {
+    const notes = el("section", "capsule-insert");
+    notes.append(el("h2", "history-title", "Notes from friends"));
+    for (const note of capsule.notes) {
+      const quote = el("blockquote", "signed-note");
+      quote.append(el("p", "", note.text), el("footer", "field-hint", note.signature));
+      notes.append(quote);
+    }
+    card.append(notes);
+  }
+  const download = el("button", "button button-secondary keepsake", "Download keepsake (.txt)");
+  download.type = "button";
+  download.addEventListener("click", downloadKeepsake);
+  card.append(download);
   stage.append(card);
   title.focus({ preventScroll: true });
 

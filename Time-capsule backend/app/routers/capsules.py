@@ -4,7 +4,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Path, Query, Request, Response, status
 
-from app.schemas.capsule import CapsuleCreate, CapsuleOut, CapsuleStatus, CapsuleUpdate, Reflection
+from app.schemas.capsule import (
+    CapsuleCreate, CapsuleDetail, CapsuleOut, CapsuleStatus, CapsuleUpdate, NoteCount, Reflection, SignedNote,
+)
 from app.database import DB
 from app.schemas.errors import ErrorResponse
 from app.services import capsule_service
@@ -62,7 +64,15 @@ def reflect(db: DB, capsule_id: CapsuleId, payload: Reflection):
     return capsule_service.record_reflection(db, capsule_id, payload.text)
 
 
-@router.get("/{capsule_id}", response_model=CapsuleOut, summary="Get a capsule", responses=NOT_FOUND)
+@router.post("/{capsule_id}/notes", response_model=NoteCount, status_code=status.HTTP_201_CREATED,
+             summary="Tuck a signed note into a sealed capsule",
+             responses={**NOT_FOUND, 409: {"model": ErrorResponse, "description": "Deadline passed or capsule full"}})
+def add_note(db: DB, capsule_id: CapsuleId, payload: SignedNote):
+    """Only the count is visible until the seal is broken. Each capsule holds up to 20 notes."""
+    return capsule_service.add_note(db, capsule_id, payload)
+
+
+@router.get("/{capsule_id}", response_model=CapsuleDetail, summary="Get a capsule", responses=NOT_FOUND)
 def get_capsule(db: DB, capsule_id: CapsuleId):
     return capsule_service.get_capsule(db, capsule_id)
 
@@ -94,7 +104,7 @@ def delete_capsule(db: DB, capsule_id: CapsuleId):
 
 @router.post(
     "/{capsule_id}/open",
-    response_model=CapsuleOut,
+    response_model=CapsuleDetail,
     summary="Break the seal and read the letter",
     responses={
         **NOT_FOUND,

@@ -21,6 +21,14 @@ For later runs, reuse the same password and URL. With an existing PostgreSQL ser
 
 Open [the website](http://127.0.0.1:8000/app/) to create letters, attach songs, and break seals. Use [Swagger UI](http://127.0.0.1:8000/docs) for the full API, including predictions, reflections, anniversaries, and recipients. Original browser saves and bundled examples are separate from database records. This classroom app shares one collection and has no user authentication.
 
+## Try a group capsule
+
+Create a capsule on the website and share its detail-page link with someone who can reach the same server. While the countdown runs, choose **Tuck in a note**, sign it and submit. Each capsule holds up to 20 notes. A signature is a display name. The count is visible while the capsule is sealed. Breaking the seal reveals every note in the order it was added.
+
+On an opened capsule, **Download keepsake (.txt)** saves the original letter, dates, signed notes and any attached song title, prediction or reflection. The file can be read offline.
+
+In Swagger, use **POST /capsules/{capsule_id}/notes** with `{"signature":"Ana","text":"Remember the lake?"}`. Retrieve the capsule before and after opening to see the response change. Adding a note after the deadline or to a full capsule returns 409. Deleting a capsule also deletes its notes.
+
 ## Demonstrate the assignment in Swagger
 
 1. Expand **POST /capsules**, select **Try it out**, enter a title, message, future `openAt` in ISO 8601, and optional `prediction`, then **Execute**. Copy the returned ID. Expect 201 with the letter and prediction hidden. A past opening date gives 400.

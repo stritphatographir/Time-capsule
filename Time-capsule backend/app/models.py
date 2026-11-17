@@ -26,6 +26,7 @@ class Capsule(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     open_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     opened_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    notes: Mapped[list["CapsuleNote"]] = relationship(back_populates="capsule", cascade="all, delete-orphan", passive_deletes=True)
     recipients: Mapped[list["Recipient"]] = relationship(back_populates="capsule", cascade="all, delete-orphan", passive_deletes=True)
 
 
@@ -38,3 +39,16 @@ class Recipient(Base):
     name: Mapped[str | None] = mapped_column(String(100))
     added_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     capsule: Mapped[Capsule] = relationship(back_populates="recipients")
+
+
+class CapsuleNote(Base):
+    __tablename__ = "capsule_notes"
+    __table_args__ = (
+        CheckConstraint("length(trim(signature)) > 0 AND length(trim(text)) > 0", name="nonempty_note"),
+        Index("ix_capsule_notes_capsule_id_id", "capsule_id", "id"),
+    )
+    id: Mapped[int] = mapped_column(primary_key=True)
+    capsule_id: Mapped[int] = mapped_column(ForeignKey("capsules.id", ondelete="CASCADE"))
+    signature: Mapped[str] = mapped_column(String(80))
+    text: Mapped[str] = mapped_column(String(600))
+    capsule: Mapped[Capsule] = relationship(back_populates="notes")

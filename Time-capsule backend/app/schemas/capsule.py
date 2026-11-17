@@ -75,3 +75,17 @@ class CapsuleOut(CamelModel):
 
 class Reflection(CamelModel):
     text: str = Field(min_length=1, max_length=1500)
+
+
+class SignedNote(CamelModel):
+    signature: str = Field(min_length=1, max_length=80)
+    text: str = Field(min_length=1, max_length=600)
+
+
+class NoteCount(CamelModel):
+    note_count: int
+
+
+class CapsuleDetail(CapsuleOut):
+    note_count: int
+    notes: list[SignedNote]
