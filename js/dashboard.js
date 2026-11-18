@@ -1,5 +1,3 @@
-// Dashboard: loads capsules and shows them as cards with a live countdown.
-
 const grid = document.getElementById("grid");
 const statusBox = document.getElementById("status");
 const summary = document.getElementById("summary");
@@ -16,7 +14,6 @@ let loading = false;
 let nextRefreshAt = 0;
 let nextOpening = Infinity;
 
-// Создаёт элемент. Текст ставим через textContent, а не innerHTML (безопасно).
 function el(tag, className, text) {
   const node = document.createElement(tag);
   if (className) node.className = className;
@@ -41,8 +38,6 @@ function splitTime(ms) {
     seconds: total % 60,
   };
 }
-
-// ---------- Loading, error and empty states ----------
 
 function showStatus(kind, message) {
   statusBox.replaceChildren();
@@ -82,8 +77,6 @@ function showStatus(kind, message) {
   }
 }
 
-// ---------- Countdown ----------
-
 function buildCountdown(capsule) {
   const wrap = el("div", "countdown");
   wrap.dataset.openAt = capsule.openAt;
@@ -101,7 +94,6 @@ function buildCountdown(capsule) {
   return wrap;
 }
 
-// Обновляет цифры и возвращает, сколько миллисекунд осталось
 function updateCountdown(wrap) {
   const left = new Date(wrap.dataset.openAt).getTime() - Date.now();
   const time = splitTime(left);
@@ -118,7 +110,7 @@ function tick() {
   if (loading) return;
   grid.querySelectorAll(".countdown").forEach(updateCountdown);
 
-  // The browser clock can reach zero before the server considers a capsule ready.
+  // Таймер в браузере может дойти до нуля раньше серверного. Ограничиваем частоту повторных запросов.
   const now = performance.now();
   const shouldRefresh = Date.now() >= nextOpening;
   if (shouldRefresh && now >= nextRefreshAt) {
@@ -126,8 +118,6 @@ function tick() {
     loadCapsules(true);
   }
 }
-
-// ---------- Cards ----------
 
 function recipientsText(capsule) {
   const count = capsule.recipientCount;
@@ -173,8 +163,6 @@ function buildCard(capsule) {
   return card;
 }
 
-// ---------- Render ----------
-
 function render() {
   const sealed = capsules.filter((capsule) => capsule.status === "sealed");
   const ready = capsules.filter((capsule) => capsule.status === "ready");
@@ -207,8 +195,6 @@ function render() {
   visible.forEach((capsule) => grid.append(buildCard(capsule)));
 }
 
-// ---------- Loading data ----------
-
 async function loadCapsules(silent = false) {
   if (loading) return;
   loading = true;
@@ -232,8 +218,6 @@ async function loadCapsules(silent = false) {
     loading = false;
   }
 }
-
-// ---------- Filter tabs ----------
 
 function applyFilters() {
   const url = new URL(location.href);

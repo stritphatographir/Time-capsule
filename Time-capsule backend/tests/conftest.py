@@ -1,4 +1,4 @@
-"""Migrate a fresh, private PostgreSQL schema for every test."""
+"""Каждый тест получает свою схему PostgreSQL и накатывает на неё миграции."""
 import os
 from pathlib import Path
 from uuid import uuid4

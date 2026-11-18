@@ -3,5 +3,6 @@ __pycache__/
 .pytest_cache/
 .DS_Store
 .venv/
+# Здесь лежат локальные проверки, в том числе файлы с паролем тестовой базы.
 .verification/
 .env

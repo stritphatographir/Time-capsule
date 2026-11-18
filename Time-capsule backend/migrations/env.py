@@ -4,6 +4,7 @@ from sqlalchemy import create_engine, pool
 from app.database import database_url
 from app.models import Base
 
+# В режиме --sql Alembic печатает SQL без подключения к базе.
 if context.is_offline_mode():
     context.configure(url=database_url(), target_metadata=Base.metadata, literal_binds=True)
     with context.begin_transaction():

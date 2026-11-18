@@ -65,7 +65,7 @@ function songStoreUrl(song) {
       return url.href;
     }
   } catch {
-    // Older saves may have no store URL.
+    // В старых капсулах ссылки на песню может не быть.
   }
   return null;
 }
@@ -75,7 +75,7 @@ function isApiCapsuleId(id) {
 }
 
 function apiCapsule(record) {
-  // The API and bundled examples both start numbering capsules at 1.
+  // У примера и записи в базе может быть один номер. Префикс отличает их в ссылках.
   return { ...record, id: `api:${record.id}` };
 }
 
@@ -104,7 +104,7 @@ function getBrowserCapsules() {
   }
 }
 
-// Keep the seal markers written by earlier versions of the capsule page.
+// Старые отметки об открытии ищем по тому же ключу.
 const brokenKey = (id) => `capsule-broken:${id}`;
 
 function wasBroken(capsule) {
@@ -180,7 +180,7 @@ async function openBrowserCapsule(id, demoOpenAt) {
     try {
       localStorage.setItem(brokenKey(capsule.id), "1");
     } catch {
-      // The capsule can still be opened for this visit.
+      // Если браузер не даёт записать отметку, письмо всё равно откроется в этой вкладке.
     }
   }
   return { ...capsule, status: "opened" };
@@ -192,7 +192,7 @@ async function openCapsule(id, demoOpenAt = null) {
   try {
     return apiCapsule(await requestCapsules(`/${id.slice(4)}/open`, { method: "POST" }));
   } catch (error) {
-    // Another tab may have opened this capsule while the current page was still ready.
+    // Если печать уже сняли в другой вкладке, просто перечитываем капсулу.
     if (error.code !== "already_opened") throw error;
     const capsule = await getCapsule(id);
     if (capsule?.status === "opened") return capsule;

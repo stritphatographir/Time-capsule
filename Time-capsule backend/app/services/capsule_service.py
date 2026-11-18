@@ -15,8 +15,7 @@ from app.exceptions import (
 )
 from app.schemas.capsule import CapsuleCreate, CapsuleStatus, CapsuleUpdate, SignedNote
 
-# Minimum lead time before opening. Can be reduced for demonstration:
-#   CAPSULE_MIN_LEAD_SECONDS=5 uvicorn app.main:app --reload
+# Для короткого показа можно задать CAPSULE_MIN_LEAD_SECONDS=5.
 MIN_LEAD = timedelta(seconds=int(os.getenv("CAPSULE_MIN_LEAD_SECONDS", "60")))
 MAX_LEAD = timedelta(days=365 * 50)
 
@@ -26,7 +25,7 @@ def utcnow() -> datetime:
 
 
 def _as_utc(value: datetime) -> datetime:
-    """A date without a timezone is treated as UTC."""
+    """Дату без часового пояса считаем заданной в UTC."""
     if value.tzinfo is None:
         return value.replace(tzinfo=timezone.utc)
     return value.astimezone(timezone.utc)
@@ -44,6 +43,7 @@ def _check_open_at(open_at: datetime) -> None:
 
 def get_record(db: Session, capsule_id: int, *, lock=False) -> Capsule:
     query = select(Capsule).where(Capsule.id == capsule_id)
+    # Перед записью берём блокировку на капсулу: иначе два запроса могут занять последнее место.
     row = db.scalar(query.with_for_update() if lock else query)
     if row is None:
         raise CapsuleNotFoundError(f"Capsule {capsule_id} was not found.")
@@ -51,6 +51,7 @@ def get_record(db: Session, capsule_id: int, *, lock=False) -> Capsule:
 
 
 def public(row, now):
+    # Даже когда срок наступил, письмо остаётся закрытым, пока кто-нибудь не снимет печать.
     opened = row.opened_at is not None
     status = "opened" if opened else ("ready" if row.open_at <= now else "sealed")
     return dict(id=row.id, title=row.title, created_at=row.created_at, open_at=row.open_at,
@@ -159,6 +160,7 @@ def record_reflection(db, capsule_id, text):
 
 
 def anniversaries(db, day, limit, offset):
+    # Годовщину считаем по дню открытия в UTC, независимо от часового пояса базы.
     opened_utc = func.timezone("UTC", Capsule.opened_at)
     rows = db.scalars(select(Capsule).options(selectinload(Capsule.recipients)).where(
         extract("month", opened_utc) == day.month,

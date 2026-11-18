@@ -37,7 +37,7 @@ a { color: inherit; }
   outline-offset: 2px;
 }
 
-/* Header */
+/* Шапка */
 .site-header {
   display: flex;
   flex-wrap: wrap;
@@ -67,7 +67,7 @@ a { color: inherit; }
 .site-nav a[aria-current="page"] { border-bottom-color: var(--brass); font-weight: 600; }
 .site-nav a:hover { border-bottom-color: var(--line); }
 
-/* Page */
+/* Страницы */
 .page {
   max-width: 1000px;
   margin: 0 auto;
@@ -83,7 +83,7 @@ h1 {
 
 .summary { margin: 0 0 1.5rem; color: var(--muted); }
 
-/* Filter tabs */
+/* Фильтры архива */
 .tabs {
   display: flex;
   gap: 1.25rem;
@@ -107,7 +107,7 @@ h1 {
   border-bottom-color: var(--brass);
 }
 
-/* Loading, error, empty */
+/* Состояния списка */
 .status {
   padding: 2rem 1rem;
   text-align: center;
@@ -131,7 +131,7 @@ h1 {
 
 .button:hover { background: var(--ink-hover); }
 
-/* Cards */
+/* Карточки в архиве */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr));
@@ -185,7 +185,7 @@ h1 {
 
 .card-meta { margin: 0; color: var(--muted); font-size: 0.95rem; }
 
-/* The countdown is the memorable element of the page */
+/* Обратный отсчёт */
 .countdown {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -227,7 +227,7 @@ h1 {
   .countdown-value { font-size: 1.7rem; }
 }
 
-/* ---------- Create page ---------- */
+/* Новая капсула */
 .page.narrow { max-width: 680px; }
 
 .field { margin-bottom: 1.5rem; }
@@ -351,7 +351,7 @@ legend { padding: 0 0.35rem; }
   word-break: break-word;
 }
 
-/* ---------- Capsule page ---------- */
+/* Просмотр капсулы */
 .back-link { display: inline-block; margin-bottom: 1.25rem; }
 
 .capsule-card {
@@ -421,7 +421,7 @@ legend { padding: 0 0.35rem; }
   font-size: 0.875rem;
 }
 
-/* Wax seal made of two halves, so it can crack */
+/* Две половины печати расходятся при открытии. */
 .seal {
   position: relative;
   width: 96px;
@@ -454,7 +454,7 @@ legend { padding: 0 0.35rem; }
   .seal-half { transition: none; }
 }
 
-/* The letter appears after the seal breaks */
+/* Открытое письмо */
 .letter-body {
   max-width: 62ch;
   margin: 1.25rem 0 0;
@@ -489,7 +489,7 @@ legend { padding: 0 0.35rem; }
   background: var(--sealed-bg);
 }
 
-/* On this day */
+/* События этого дня */
 .history { margin-top: 2.5rem; }
 
 .history-title {
@@ -518,7 +518,7 @@ legend { padding: 0 0.35rem; }
 .history-text { margin: 0 0 0.25rem; }
 .history-source { margin: 0.75rem 0 0; color: var(--muted); font-size: 0.9rem; }
 
-/* ---------- Night theme ---------- */
+/* Ночная тема */
 :root[data-theme="dark"] {
   color-scheme: dark;
   --bg: #0e1620;
@@ -552,7 +552,7 @@ legend { padding: 0 0.35rem; }
   color: var(--on-ink);
 }
 
-/* ---------- Home page ---------- */
+/* Главная */
 .hero {
   display: grid;
   grid-template-columns: 1fr;
@@ -617,7 +617,7 @@ legend { padding: 0 0.35rem; }
 .letter-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem; }
 
 
-/* Signed notes on the capsule page */
+/* Записки друзей */
 .capsule-insert {
   margin-top: 2rem;
   padding-top: 1.25rem;

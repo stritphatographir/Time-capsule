@@ -1,4 +1,4 @@
-"""Add signed notes to capsules."""
+"""Записки с подписью для групповых капсул."""
 from alembic import op
 import sqlalchemy as sa
 
@@ -17,6 +17,7 @@ def upgrade():
         sa.Column("text", sa.String(600), nullable=False),
         sa.CheckConstraint("length(trim(signature)) > 0 AND length(trim(text)) > 0", name="nonempty_note"),
     )
+    # При открытии читаем записки одной капсулы в порядке добавления.
     op.create_index("ix_capsule_notes_capsule_id_id", "capsule_notes", ["capsule_id", "id"])
 
 

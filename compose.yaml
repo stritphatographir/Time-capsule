@@ -7,6 +7,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD first}
     ports:
       - "127.0.0.1:5432:5432"
+    # При следующем запуске с этим томом нужен тот же пароль.
     volumes:
       - capsule_data:/var/lib/postgresql/data
     healthcheck:

@@ -7,9 +7,9 @@ from app.schemas.base import CamelModel
 
 
 class CapsuleStatus(str, Enum):
-    sealed = "sealed"      # The opening date has not arrived yet
-    ready = "ready"    # The date has arrived, but the seal is still intact
-    opened = "opened"  # The seal is broken, and the letter is accessible
+    sealed = "sealed"
+    ready = "ready"  # Срок уже наступил, но письмо ещё никто не открыл.
+    opened = "opened"
 
 
 class Song(CamelModel):
@@ -46,7 +46,7 @@ class CapsuleUpdate(CamelModel):
     message: str | None = Field(default=None, min_length=1, max_length=5000)
     prediction: str | None = Field(default=None, min_length=1, max_length=240)
     open_at: datetime | None = None
-    song: Song | None = None  # Explicit null removes the song
+    song: Song | None = None  # В PATCH явный null убирает песню.
 
     @model_validator(mode="after")
     def check_fields(self):
@@ -68,7 +68,6 @@ class CapsuleOut(CamelModel):
     status: CapsuleStatus
     reflection: str | None = None
     recipient_count: int
-    # The server returns message and song only when the seal is broken (status = opened)
     message: str | None = None
     song: Song | None = None
 

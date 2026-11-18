@@ -1,16 +1,10 @@
-// Capsule page. Three states:
-//   sealed  - the date has not come yet: countdown, no content
-//   ready   - the date has come: the person breaks the seal
-//   opened  - the letter and the song are shown
-// Plus a block "On this day in history" from the Wikipedia API.
-
 const stage = document.getElementById("stage");
 const historyBox = document.getElementById("history");
 
 const params = new URLSearchParams(window.location.search);
 const capsuleId = params.get("id");
 
-// The demo parameter adjusts a bundled example only. The API controls saved capsules.
+// У примеров таймер можно ускорить для показа. Для сохранённых капсул дату проверяет сервер.
 const demoSeconds = capsuleId === DEMO_CAPSULE_ID ? 10 : Number(params.get("demo")) || 0;
 const demoOpenAt = demoSeconds > 0 && demoSeconds <= 3600
   ? new Date(Date.now() + demoSeconds * 1000).toISOString()
@@ -19,8 +13,6 @@ const demoOpenAt = demoSeconds > 0 && demoSeconds <= 3600
 let capsule = null;
 let timerId = null;
 let historyLoadedFor = null;
-
-// ---------- Helpers (похожие функции есть в dashboard.js) ----------
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -54,8 +46,6 @@ function recipientsText(count) {
   return count === 1 ? "Shared with 1 person" : `Shared with ${count} people`;
 }
 
-// ---------- Messages: loading, error, not found ----------
-
 function showMessage(kind, details) {
   clearInterval(timerId);
   stage.replaceChildren();
@@ -83,8 +73,6 @@ function showMessage(kind, details) {
 
   stage.append(box);
 }
-
-// ---------- Seal and countdown ----------
 
 function buildSeal() {
   const seal = el("div", "seal");
@@ -135,8 +123,6 @@ async function tick() {
     await loadCapsule(true);
   }
 }
-
-// ---------- The three states ----------
 
 function buildTitle() {
   const title = el("h1", "capsule-title", capsule.title);
@@ -222,7 +208,7 @@ function renderSealed() {
 
   if (isApiCapsuleId(capsuleId)) card.append(buildNoteForm());
   stage.append(card);
-  // The server may still report sealed if the browser clock is ahead.
+  // Если часы в браузере спешат, дадим серверу пять секунд перед следующей проверкой.
   const pastLocalDeadline = Date.parse(capsule.openAt) <= Date.now();
   timerId = setInterval(tick, pastLocalDeadline ? 5000 : 1000);
 }
@@ -430,7 +416,7 @@ function renderOpened(justOpened) {
   stage.append(card);
   title.focus({ preventScroll: true });
 
-  // Музыка включается только сразу после клика пользователя (так разрешают браузеры)
+  // При повторном просмотре песню запускает сам читатель.
   if (justOpened && audio) {
     audio.play().catch(() => {});
   }
@@ -451,13 +437,11 @@ function render() {
   loadHistory();
 }
 
-// ---------- On this day (Wikipedia API) ----------
-
 function formatYear(year) {
   return year < 0 ? `${Math.abs(year)} BC` : String(year);
 }
 
-// Берём 4 события из разных эпох
+// Берём события с равными интервалами по списку, от самого раннего до самого позднего.
 function pickEvents(events) {
   const sorted = [...events].sort((a, b) => a.year - b.year);
   if (sorted.length <= 4) return sorted;
@@ -531,8 +515,6 @@ async function loadHistory() {
     body.append(retry);
   }
 }
-
-// ---------- Loading the capsule ----------
 
 async function loadCapsule(silent = false) {
   if (!capsuleId) {

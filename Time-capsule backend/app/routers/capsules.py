@@ -1,4 +1,4 @@
-"""Capsule routes. Only handles request reception and service calls; no business logic here."""
+"""Здесь описаны HTTP-запросы к капсулам. Правила открытия и редактирования — в capsule_service."""
 from datetime import date
 from typing import Annotated
 

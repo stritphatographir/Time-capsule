@@ -1,7 +1,4 @@
-"""exceptions.
-Services raise these exceptions, and main.py converts them into HTTP responses.
-This keeps the business logic independent of HTTP.
-"""
+"""Сервисы сообщают об ошибках через эти исключения. Ответ клиенту собирает main.py."""
 
 class AppError(Exception):
     status_code = 400
@@ -12,7 +9,6 @@ class AppError(Exception):
         self.message = message
 
 
-#404
 class CapsuleNotFoundError(AppError):
     status_code = 404
     code = "capsule_not_found"
@@ -23,19 +19,16 @@ class RecipientNotFoundError(AppError):
     code = "recipient_not_found"
 
 
-#400# A business rule is violated by the input data
 class InvalidOpenDateError(AppError):
     status_code = 400
     code = "invalid_open_date"
 
 
-#403 The action is currently not allowed
 class CapsuleLockedError(AppError):
     status_code = 403
     code = "capsule_locked"
 
 
-#409 Conflict with the current resource state
 class AlreadyOpenedError(AppError):
     status_code = 409
     code = "already_opened"

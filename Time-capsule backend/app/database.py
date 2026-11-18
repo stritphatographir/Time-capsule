@@ -1,4 +1,4 @@
-"""Connection settings shared by FastAPI and Alembic."""
+"""API и Alembic берут адрес базы из одной переменной DATABASE_URL."""
 import os
 from functools import lru_cache
 from typing import Annotated
@@ -19,12 +19,14 @@ def database_url():
     return url.set(drivername="postgresql+psycopg")
 
 
+# Пул соединений общий для процесса, а сессия у каждого запроса своя.
 @lru_cache
 def engine():
     return create_engine(database_url(), pool_pre_ping=True)
 
 
 def get_session():
+    # После commit() сервис ещё читает поля для ответа. Сохраняем их в сессии до конца запроса.
     with Session(engine(), expire_on_commit=False) as session:
         yield session
 

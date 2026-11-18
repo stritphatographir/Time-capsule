@@ -20,11 +20,13 @@ class Capsule(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(100))
     message: Mapped[str] = mapped_column(String(5000))
+    # Если песню убрали через PATCH, в колонке должен остаться SQL NULL.
     song: Mapped[dict | None] = mapped_column(JSONB(none_as_null=True))
     prediction: Mapped[str | None] = mapped_column(String(240))
     reflection: Mapped[str | None] = mapped_column(String(1500))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     open_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    # open_at — запланированная дата, opened_at — когда читатель снял печать.
     opened_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     notes: Mapped[list["CapsuleNote"]] = relationship(back_populates="capsule", cascade="all, delete-orphan", passive_deletes=True)
     recipients: Mapped[list["Recipient"]] = relationship(back_populates="capsule", cascade="all, delete-orphan", passive_deletes=True)

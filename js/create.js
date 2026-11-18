@@ -1,5 +1,3 @@
-// Create capsule: form validation + song search through the iTunes Search API.
-
 const form = document.getElementById("capsule-form");
 const titleInput = document.getElementById("title");
 const messageInput = document.getElementById("message");
@@ -17,10 +15,8 @@ const submitButton = form.querySelector('button[type="submit"]');
 
 const MAX_MESSAGE = 5000;
 
-let selectedSong = null; // выбранная песня или null
-let searchCounter = 0;   // нужен, чтобы игнорировать устаревшие ответы
-
-// ---------- Helpers ----------
+let selectedSong = null;
+let searchCounter = 0;
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -40,8 +36,6 @@ openAtInput.min = toLocalInputValue(new Date());
 messageInput.addEventListener("input", () => {
   charCount.textContent = `${messageInput.value.length} / ${MAX_MESSAGE}`;
 });
-
-// ---------- Validation ----------
 
 function validate() {
   const errors = {};
@@ -80,6 +74,7 @@ function showErrors(errors) {
       box.hidden = true;
       input.removeAttribute("aria-invalid");
     }
+    // Скринридеру нужны и текст ошибки, и обычная подсказка к полю.
     const hint = { message: "char-count", prediction: "prediction-hint", openAt: "opening-hint" }[name];
     const descriptions = [hint, errors[name] && box.id].filter(Boolean);
     if (descriptions.length) input.setAttribute("aria-describedby", descriptions.join(" "));
@@ -88,8 +83,6 @@ function showErrors(errors) {
   firstInvalid?.focus();
   return Boolean(firstInvalid);
 }
-
-// ---------- Song search (fetch + async/await) ----------
 
 function setSongStatus(text) {
   songStatus.textContent = text;
@@ -108,7 +101,7 @@ async function searchSongs() {
 
   try {
     const songs = await searchSongsOnServer(term);
-    if (myId !== searchCounter) return; // пришёл старый ответ, игнорируем
+    if (myId !== searchCounter) return; // Пока шёл запрос, пользователь запустил другой поиск.
 
     if (songs.length === 0) {
       setSongStatus(`No songs found for “${term}”. Try another spelling.`);
@@ -199,8 +192,6 @@ songQuery.addEventListener("keydown", (event) => {
     searchSongs();
   }
 });
-
-// ---------- Submit ----------
 
 function showSaveError(error) {
   const errors = {};

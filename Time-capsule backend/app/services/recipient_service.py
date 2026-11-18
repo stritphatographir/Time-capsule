@@ -26,6 +26,7 @@ def add_recipient(db, capsule_id, payload):
 
 def remove_recipient(db, capsule_id, recipient_id):
     parent = capsule_service.get_record(db, capsule_id, lock=True)
+    # Номер получателя может существовать, но относиться к другой капсуле.
     recipient = db.get(Recipient, recipient_id)
     if recipient is None or recipient.capsule_id != capsule_id:
         raise RecipientNotFoundError("Recipient was not found in this capsule.")

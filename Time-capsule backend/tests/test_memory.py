@@ -23,6 +23,7 @@ def test_prediction_reflection_and_anniversary(client, monkeypatch):
     assert client.post(path + "/open").json()["prediction"] == payload["prediction"]
     assert client.put(path + "/reflection", json={"text": "   "}).status_code == 422
     assert client.put(path + "/reflection", json={"text": "I teach ceramics!"}).status_code == 200
+    # Читаем через новое соединение: ответ должен сохраниться в базе.
     engine().dispose()
     assert client.get(path).json()["reflection"] == "I teach ceramics!"
     assert client.get("/capsules/anniversaries?day=2030-04-16").json() == []

@@ -1,4 +1,4 @@
-"""Recipient routes. A recipient always belongs to a capsule."""
+"""Получатели доступны по адресу своей капсулы."""
 from typing import Annotated
 
 from fastapi import APIRouter, Path, Response, status

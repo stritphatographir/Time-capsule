@@ -8,7 +8,7 @@ You need Python 3.13 or later and PostgreSQL. The included Docker Compose servic
 
 ```powershell
 $env:POSTGRES_PASSWORD = [guid]::NewGuid().ToString('N')
-# Save this value privately for future runs with the same volume.
+# Сохраните пароль: он понадобится при следующем запуске с тем же томом.
 $env:DATABASE_URL = "postgresql+psycopg://capsule:$($env:POSTGRES_PASSWORD)@127.0.0.1:5432/capsules"
 docker compose up -d --wait
 py -3.13 -m venv .venv

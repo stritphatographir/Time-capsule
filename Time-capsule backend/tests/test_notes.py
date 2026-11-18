@@ -52,6 +52,7 @@ def test_note_validation_and_concurrent_limit(client):
         assert client.post(path, json={**note, **invalid}).status_code == 422
     for _ in range(19):
         assert client.post(path, json=note).status_code == 201
+    # На последнее место одновременно претендуют две записки.
     with ThreadPoolExecutor(max_workers=2) as pool:
         responses = list(pool.map(lambda _: client.post(path, json=note), range(2)))
     assert sorted(response.status_code for response in responses) == [201, 409]
