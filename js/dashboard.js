@@ -4,12 +4,17 @@ const grid = document.getElementById("grid");
 const statusBox = document.getElementById("status");
 const summary = document.getElementById("summary");
 const tabs = document.querySelectorAll(".tab");
+const queryInput = document.getElementById("archive-query");
+const params = new URLSearchParams(location.search);
+queryInput.value = (params.get("q") || "").slice(0, queryInput.maxLength);
 
 let capsules = [];
-let currentFilter = "all"; // "all" | "sealed" | "opened"
+let currentFilter = [...tabs].some(tab => tab.dataset.filter === params.get("status"))
+  ? params.get("status") : "all";
 let timerId = null;
 let loading = false;
 let nextRefreshAt = 0;
+let nextOpening = Infinity;
 
 // Создаёт элемент. Текст ставим через textContent, а не innerHTML (безопасно).
 function el(tag, className, text) {
@@ -55,6 +60,17 @@ function showStatus(kind, message) {
   }
 
   if (kind === "empty") {
+    if (queryInput.value.trim()) {
+      statusBox.append(el("p", "status-text", "No titles match this search."));
+      const clear = el("button", "button button-secondary", "Clear search");
+      clear.addEventListener("click", () => {
+        queryInput.value = "";
+        applyFilters();
+        queryInput.focus();
+      });
+      statusBox.append(clear);
+      return;
+    }
     if (capsules.length > 0) {
       statusBox.append(el("p", "status-text", `No ${currentFilter} capsules.`));
       return;
@@ -100,14 +116,11 @@ function updateCountdown(wrap) {
 
 function tick() {
   if (loading) return;
-  let shouldRefresh = false;
-
-  grid.querySelectorAll(".countdown").forEach((wrap) => {
-    if (updateCountdown(wrap) <= 0) shouldRefresh = true;
-  });
+  grid.querySelectorAll(".countdown").forEach(updateCountdown);
 
   // The browser clock can reach zero before the server considers a capsule ready.
   const now = performance.now();
+  const shouldRefresh = Date.now() >= nextOpening;
   if (shouldRefresh && now >= nextRefreshAt) {
     nextRefreshAt = now + 5000;
     loadCapsules(true);
@@ -170,11 +183,20 @@ function render() {
   const readySummary = ready.length ? `${ready.length} ready, ` : "";
   summary.textContent = `${sealed.length} sealed, ${readySummary}${opened.length} opened`;
 
-  const visible =
-    currentFilter === "sealed" ? sealed : currentFilter === "opened" ? opened : capsules;
+  const query = queryInput.value.trim().toLocaleLowerCase();
+  const visible = [...ready, ...sealed, ...opened].filter(capsule =>
+    (currentFilter === "all" || capsule.status === currentFilter) &&
+    capsule.title.toLocaleLowerCase().includes(query)
+  );
+  tabs.forEach(tab => tab.setAttribute("aria-pressed", String(tab.dataset.filter === currentFilter)));
+  if (query || currentFilter !== "all") {
+    summary.textContent = `${visible.length} matching capsule${visible.length === 1 ? "" : "s"}`;
+  }
 
   grid.replaceChildren();
   clearInterval(timerId);
+  nextOpening = sealed.reduce((first, capsule) => Math.min(first, Date.parse(capsule.openAt)), Infinity);
+  if (sealed.length) timerId = setInterval(tick, 1000);
 
   if (visible.length === 0) {
     showStatus("empty");
@@ -183,10 +205,6 @@ function render() {
 
   showStatus("none");
   visible.forEach((capsule) => grid.append(buildCard(capsule)));
-
-  if (grid.querySelector(".countdown")) {
-    timerId = setInterval(tick, 1000);
-  }
 }
 
 // ---------- Loading data ----------
@@ -196,12 +214,16 @@ async function loadCapsules(silent = false) {
   loading = true;
   clearInterval(timerId);
   if (!silent) {
+    queryInput.disabled = true;
+    tabs.forEach(tab => { tab.disabled = true; });
     grid.replaceChildren();
     showStatus("loading");
   }
 
   try {
     capsules = await getCapsules();
+    queryInput.disabled = false;
+    tabs.forEach(tab => { tab.disabled = false; });
     render();
   } catch (error) {
     clearInterval(timerId);
@@ -213,11 +235,21 @@ async function loadCapsules(silent = false) {
 
 // ---------- Filter tabs ----------
 
+function applyFilters() {
+  const url = new URL(location.href);
+  if (currentFilter === "all") url.searchParams.delete("status");
+  else url.searchParams.set("status", currentFilter);
+  if (queryInput.value.trim()) url.searchParams.set("q", queryInput.value.trim());
+  else url.searchParams.delete("q");
+  history.replaceState(null, "", url);
+  render();
+}
+
+queryInput.addEventListener("input", applyFilters);
 tabs.forEach((tab) => {
   tab.addEventListener("click", () => {
     currentFilter = tab.dataset.filter;
-    tabs.forEach((t) => t.setAttribute("aria-pressed", String(t === tab)));
-    render();
+    applyFilters();
   });
 });
 

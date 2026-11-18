@@ -67,7 +67,7 @@ function validate() {
 
 function showErrors(errors) {
   let firstInvalid;
-  ["title", "message", "openAt"].forEach((name) => {
+  ["title", "message", "prediction", "openAt"].forEach((name) => {
     const input = document.getElementById(name);
     const box = document.getElementById(`${name}-error`);
 
@@ -75,13 +75,15 @@ function showErrors(errors) {
       box.textContent = errors[name];
       box.hidden = false;
       input.setAttribute("aria-invalid", "true");
-      input.setAttribute("aria-describedby", box.id);
       firstInvalid ??= input;
     } else {
       box.hidden = true;
       input.removeAttribute("aria-invalid");
-      input.removeAttribute("aria-describedby");
     }
+    const hint = { message: "char-count", prediction: "prediction-hint", openAt: "opening-hint" }[name];
+    const descriptions = [hint, errors[name] && box.id].filter(Boolean);
+    if (descriptions.length) input.setAttribute("aria-describedby", descriptions.join(" "));
+    else input.removeAttribute("aria-describedby");
   });
   firstInvalid?.focus();
   return Boolean(firstInvalid);
@@ -205,7 +207,7 @@ function showSaveError(error) {
   const otherErrors = [];
   for (const { field, message } of error.fields || []) {
     const name = field.replace(/^body\./, "");
-    if (["title", "message", "openAt"].includes(name)) errors[name] = message;
+    if (["title", "message", "prediction", "openAt"].includes(name)) errors[name] = message;
     else otherErrors.push(message);
   }
   if (error.code === "invalid_open_date") errors.openAt = error.message;
@@ -236,13 +238,14 @@ form.addEventListener("submit", async (event) => {
 
   submitButton.disabled = true;
   try {
-    await createCapsule({
+    const capsule = await createCapsule({
       title: titleInput.value.trim(),
       message: messageInput.value.trim(),
+      prediction: document.getElementById("prediction").value.trim() || null,
       openAt: new Date(openAtInput.value).toISOString(),
       song: selectedSong,
     });
-    window.location.href = "dashboard.html";
+    window.location.href = `capsule.html?id=${encodeURIComponent(capsule.id)}`;
   } catch (error) {
     showSaveError(error);
     submitButton.disabled = false;

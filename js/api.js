@@ -46,6 +46,14 @@ function submitCapsuleNote(id, signature, text) {
   });
 }
 
+function saveReflection(id, text) {
+  return requestCapsules(`/${id.slice(4)}/reflection`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text }),
+  });
+}
+
 function searchSongsOnServer(query) {
   return requestApi(`/songs/search?${new URLSearchParams({ q: query })}`);
 }

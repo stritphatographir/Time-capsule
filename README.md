@@ -23,6 +23,8 @@ Open [the website](http://127.0.0.1:8000/app/) to create letters, attach songs, 
 
 ## Try a group capsule
 
+On the website, **New capsule** lets you seal an optional prediction with your letter. After you break the seal, **Looking back** shows your prediction and lets you write or edit what actually happened. Your saved reflection is included in the keepsake download. In **Your capsules**, search by title or choose **Ready** to find a letter you can open. A filtered archive can be bookmarked.
+
 Create a capsule on the website and share its detail-page link with someone who can reach the same server. While the countdown runs, choose **Tuck in a note**, sign it and submit. Each capsule holds up to 20 notes. A signature is a display name. The count is visible while the capsule is sealed. Breaking the seal reveals every note in the order it was added.
 
 On an opened capsule, **Download keepsake (.txt)** saves the original letter, dates, signed notes and any attached song title, prediction or reflection. The file can be read offline.

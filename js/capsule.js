@@ -331,6 +331,68 @@ function downloadKeepsake() {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+function buildReflection() {
+  const section = el("section", "capsule-insert memory-entry");
+  section.id = "looking-back";
+  section.append(el("h2", "history-title", "Looking back"));
+  if (capsule.prediction) {
+    section.append(el("h3", "memory-label", "My prediction"), el("p", "memory-text", capsule.prediction));
+  }
+  const saved = el("p", "memory-text", capsule.reflection || "");
+  const label = el("h3", "memory-label", "What happened");
+  const details = el("details", "note-composer");
+  const toggle = el("summary", "card-link");
+  const form = el("form");
+  const input = el("textarea");
+  input.id = "reflection";
+  input.required = true;
+  input.maxLength = 1500;
+  const prompt = el("label", "", "What do you want to remember about today?");
+  prompt.htmlFor = input.id;
+  const submit = el("button", "button", "Save reflection");
+  submit.type = "submit";
+  const feedback = el("p", "field-hint");
+  feedback.setAttribute("role", "status");
+
+  function showSaved() {
+    label.hidden = saved.hidden = !capsule.reflection;
+    saved.textContent = capsule.reflection || "";
+    input.value = saved.textContent;
+    toggle.textContent = capsule.reflection ? "Edit reflection" : "Add a reflection";
+  }
+  showSaved();
+  input.addEventListener("input", () => input.setCustomValidity(""));
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (submit.disabled) return;
+    if (!input.value.trim()) {
+      input.setCustomValidity("Write a few words before saving.");
+      input.reportValidity();
+      return;
+    }
+    submit.disabled = true;
+    input.readOnly = true;
+    feedback.textContent = "Saving reflection…";
+    try {
+      const result = await saveReflection(capsuleId, input.value.trim());
+      capsule.reflection = result.reflection;
+      showSaved();
+      details.open = false;
+      toggle.focus();
+      feedback.textContent = "Reflection saved.";
+    } catch (error) {
+      feedback.textContent = error.message;
+    } finally {
+      submit.disabled = false;
+      input.readOnly = false;
+    }
+  });
+  form.append(prompt, input, submit);
+  details.append(toggle, form);
+  section.append(label, saved, details, feedback);
+  return section;
+}
+
 function renderOpened(justOpened) {
   clearInterval(timerId);
   stage.replaceChildren();
@@ -360,6 +422,7 @@ function renderOpened(justOpened) {
     }
     card.append(notes);
   }
+  if (isApiCapsuleId(capsuleId)) card.append(buildReflection());
   const download = el("button", "button button-secondary keepsake", "Download keepsake (.txt)");
   download.type = "button";
   download.addEventListener("click", downloadKeepsake);

@@ -21,12 +21,21 @@
   </header>
 
   <main class="page">
-    <h1>Your capsules</h1>
-    <p id="summary" class="summary"></p>
+    <div class="archive-heading">
+      <div>
+        <h1>Your capsules</h1>
+        <p id="summary" class="summary" role="status"></p>
+      </div>
+      <div class="archive-search">
+        <label for="archive-query">Find a capsule</label>
+        <input id="archive-query" type="search" placeholder="Search by title" maxlength="100" disabled>
+      </div>
+    </div>
 
     <div class="tabs" role="group" aria-label="Filter capsules">
       <button class="tab" data-filter="all" aria-pressed="true">All</button>
       <button class="tab" data-filter="sealed" aria-pressed="false">Sealed</button>
+      <button class="tab" data-filter="ready" aria-pressed="false">Ready</button>
       <button class="tab" data-filter="opened" aria-pressed="false">Opened</button>
     </div>
 

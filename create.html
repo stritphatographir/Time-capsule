@@ -22,26 +22,35 @@
 
   <main class="page narrow">
     <h1>New capsule</h1>
-    <p class="summary">Write a letter, add a song and choose when it opens. Break the seal when the time comes.</p>
+    <p class="summary">Write to your future self or a friend. Choose when the letter opens.</p>
 
     <form id="capsule-form" novalidate>
-      <div class="field">
-        <label for="title">Title</label>
-        <input id="title" name="title" type="text" maxlength="100" autocomplete="off">
-        <p class="field-error" id="title-error" hidden></p>
-      </div>
+      <div class="writing-paper">
+        <div class="field">
+          <label for="title">Title</label>
+          <input id="title" name="title" type="text" maxlength="100" autocomplete="off" required>
+          <p class="field-error" id="title-error" hidden></p>
+        </div>
 
-      <div class="field">
-        <label for="message">Letter</label>
-        <textarea id="message" name="message" maxlength="5000"></textarea>
-        <p class="field-hint" id="char-count">0 / 5000</p>
-        <p class="field-error" id="message-error" hidden></p>
+        <div class="field">
+          <label for="message">Letter</label>
+          <textarea id="message" name="message" maxlength="5000" aria-describedby="char-count" required></textarea>
+          <p class="field-hint" id="char-count">0 / 5000</p>
+          <p class="field-error" id="message-error" hidden></p>
+        </div>
+
+        <div class="field">
+          <label for="prediction">My prediction <span class="optional-label">(optional)</span></label>
+          <p class="field-hint" id="prediction-hint">What do you think will be different when this opens?</p>
+          <input id="prediction" name="prediction" type="text" maxlength="240" aria-describedby="prediction-hint">
+          <p class="field-error" id="prediction-error" hidden></p>
+        </div>
       </div>
 
       <div class="field">
         <label for="openAt">Opens on</label>
-        <input id="openAt" name="openAt" type="datetime-local">
-        <p class="field-hint">Your local time. Pick at least one minute from now.</p>
+        <input id="openAt" name="openAt" type="datetime-local" required aria-describedby="opening-hint">
+        <p class="field-hint" id="opening-hint">Your local time. Pick at least one minute from now.</p>
         <p class="field-error" id="openAt-error" hidden></p>
       </div>
 
